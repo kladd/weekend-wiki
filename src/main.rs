@@ -1,11 +1,10 @@
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use axum::{
 	http::StatusCode,
 	response::{Html, IntoResponse},
 	routing, Router,
 };
-
 
 mod create;
 mod document;
@@ -17,14 +16,12 @@ include!(concat!(env!("OUT_DIR"), "/config.rs"));
 const BINCODE_CONFIG: bincode::config::Configuration =
 	bincode::config::standard();
 
-type DB = Arc<rocksdb::DB>;
-
 pub struct Context {
 	// Database.
 	db: rocksdb::DB,
 
 	// Searching.
-	search: search::SearchContext,
+	search: RwLock<search::SearchContext>,
 }
 
 #[tokio::main]
@@ -33,7 +30,7 @@ async fn main() {
 	let db = rocksdb::DB::open_default(LOCAL_DB_PATH).unwrap();
 
 	// Search
-	let search_context = search::SearchContext::new(&db);
+	let search_context = RwLock::new(search::SearchContext::new(&db));
 
 	// Whole world.
 	let context = Arc::new(Context {

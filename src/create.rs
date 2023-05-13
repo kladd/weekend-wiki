@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{document::Document, search::SearchContext, Context, CREATE_HTML};
+use crate::{document::Document, Context, CREATE_HTML};
 
 #[derive(Deserialize)]
 pub struct CreatePayload {
@@ -17,12 +17,6 @@ pub struct CreatePayload {
 
 pub async fn get() -> impl IntoResponse {
 	Html(CREATE_HTML)
-}
-
-#[derive(Clone)]
-pub struct CreateState {
-	db: Arc<rocksdb::DB>,
-	search: Arc<SearchContext>,
 }
 
 #[axum_macros::debug_handler]
@@ -37,6 +31,7 @@ pub async fn post(
 	state.db.put(doc.slug().clone(), doc.as_bytes()).unwrap();
 
 	// TODO: Update search index.
+	state.search.write().unwrap().update_index(&doc);
 
 	Redirect::to(&format!("/read/{}", doc.slug()))
 }

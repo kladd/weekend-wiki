@@ -57,7 +57,7 @@ pub async fn post(
 	// TODO: Custom rejection.
 	Form(params): Form<EditPayload>,
 ) -> impl IntoResponse {
-	let Context { db, .. } = ctx.as_ref();
+	let Context { db, search } = ctx.as_ref();
 
 	let doc = db
 		// TODO: Sanitize.
@@ -69,8 +69,12 @@ pub async fn post(
 	if let Some(mut doc) = doc {
 		// TODO: Sanitize.
 		doc.set_content(params.content);
+
 		// TODO: Handle DB error.
 		db.put(doc.slug(), doc.as_bytes()).unwrap();
+
+		search.write().unwrap().update_index(&doc);
+
 		Redirect::to(&format!("/read/{slug}"))
 	} else {
 		Redirect::to(&format!("/write/{slug}?error=YES"))

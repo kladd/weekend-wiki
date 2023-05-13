@@ -1,12 +1,4 @@
-use std::sync::Arc;
-
-use askama::Template;
-use axum::{
-	extract::{Query, State},
-	response::{Html, IntoResponse},
-};
 use rocksdb::IteratorMode;
-use serde::Deserialize;
 use tantivy::{
 	collector::TopDocs,
 	doc,
@@ -15,25 +7,7 @@ use tantivy::{
 	Index, IndexWriter,
 };
 
-use crate::{document::Document, Context};
-
-#[derive(Debug, Deserialize)]
-pub struct SearchParams {
-	#[serde(rename = "q")]
-	query: String,
-}
-
-#[derive(Template)]
-#[template(path = "search.html")]
-pub struct SearchResults {
-	query: String,
-	results: Vec<SearchResult>,
-}
-
-pub struct SearchResult {
-	title: String,
-	slug: String,
-}
+use crate::document::Document;
 
 pub struct SearchContext {
 	index: Index,
@@ -41,50 +15,12 @@ pub struct SearchContext {
 	query_parser: QueryParser,
 	f_title: Field,
 	f_slug: Field,
+	f_content: Field,
 }
 
-#[axum_macros::debug_handler]
-pub async fn get(
-	Query(params): Query<SearchParams>,
-	State(ctx): State<Arc<Context>>,
-) -> impl IntoResponse {
-	let Context { search, .. } = ctx.as_ref();
-
-	// TODO: I think reader should be long lived?
-	let searcher = search.index.reader().unwrap().searcher();
-	// TODO: Sanitize.
-	let query = search.query_parser.parse_query(&params.query).unwrap();
-
-	let search_results =
-		searcher.search(&query, &TopDocs::with_limit(16)).unwrap();
-	let mut results = vec![];
-	for (_score, doc_address) in search_results {
-		let doc = searcher.doc(doc_address).unwrap();
-		results.push(SearchResult {
-			slug: doc
-				.get_first(search.f_slug)
-				.unwrap()
-				.as_text()
-				.unwrap()
-				.to_string(),
-			title: doc
-				.get_first(search.f_title)
-				.unwrap()
-				.as_text()
-				.unwrap()
-				.to_string(),
-		})
-	}
-
-	Html(
-		SearchResults {
-			// TODO: Sanitize.
-			query: params.query,
-			results,
-		}
-		.render()
-		.unwrap(),
-	)
+pub struct QueryResult {
+	pub(super) slug: String,
+	pub(super) title: String,
 }
 
 impl SearchContext {
@@ -122,6 +58,51 @@ impl SearchContext {
 			query_parser,
 			f_slug: slug,
 			f_title: title,
+			f_content: content,
 		}
+	}
+
+	pub fn query(&self, query: &str) -> Vec<QueryResult> {
+		// TODO: I think reader should be long lived?
+		let searcher = self.index.reader().unwrap().searcher();
+		// TODO: Sanitize.
+		let q = self.query_parser.parse_query(query).unwrap();
+
+		let search_results =
+			searcher.search(&q, &TopDocs::with_limit(16)).unwrap();
+
+		let mut results = vec![];
+		for (_score, doc_address) in search_results {
+			let doc = searcher.doc(doc_address).unwrap();
+			results.push(QueryResult {
+				slug: doc
+					.get_first(self.f_slug)
+					.unwrap()
+					.as_text()
+					.unwrap()
+					.to_string(),
+				title: doc
+					.get_first(self.f_title)
+					.unwrap()
+					.as_text()
+					.unwrap()
+					.to_string(),
+			})
+		}
+
+		results
+	}
+
+	pub fn update_index(&mut self, doc: &Document) {
+		self.index_writer
+			.add_document(doc!(
+				self.f_slug => doc.slug().clone(),
+				self.f_title => doc.title().clone(),
+				self.f_content => doc.content().unwrap_or(&String::new()).as_str()
+			))
+			// TODO: Handle error.
+			.unwrap();
+		// TODO: Handle error.
+		self.index_writer.commit().unwrap();
 	}
 }
