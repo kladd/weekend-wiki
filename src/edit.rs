@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use askama::Template;
 use axum::{
 	extract::{Path, State},
@@ -6,7 +8,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{document::Document, not_found, DB};
+use crate::{document::Document, not_found, Context};
 
 #[derive(Template)]
 #[template(path = "edit.html")]
@@ -22,9 +24,12 @@ pub struct EditPayload {
 
 pub async fn get(
 	Path(slug): Path<String>,
-	State(db): State<DB>,
+	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
+	let Context { db, .. } = ctx.as_ref();
+
 	let doc = db
+		// TODO: Sanitize.
 		.get(&slug)
 		// TODO: Handle DB error.
 		.unwrap()
@@ -48,17 +53,21 @@ pub async fn get(
 #[axum_macros::debug_handler]
 pub async fn post(
 	Path(slug): Path<String>,
-	State(db): State<DB>,
+	State(ctx): State<Arc<Context>>,
 	// TODO: Custom rejection.
 	Form(params): Form<EditPayload>,
 ) -> impl IntoResponse {
+	let Context { db, .. } = ctx.as_ref();
+
 	let doc = db
+		// TODO: Sanitize.
 		.get(&slug)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);
 
 	if let Some(mut doc) = doc {
+		// TODO: Sanitize.
 		doc.set_content(params.content);
 		// TODO: Handle DB error.
 		db.put(doc.slug(), doc.as_bytes()).unwrap();

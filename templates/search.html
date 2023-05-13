@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en-US"><!-- 🦅 -->
+<head>
+    <title>{{ query }} - Search results - Weekend</title></head>
+<body>
+<h1>Results for &ldquo;<em>{{ query }}</em>&rdquo;</h1>
+
+{% for entry in results %}
+<section>
+    <h2><a href="/read/{{ entry.slug }}">{{ entry.title }}</a></h2>
+</section>
+{% endfor %}
+
+</body>
+</html>

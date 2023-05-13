@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use askama::Template;
 use axum::{
 	extract::{Path, State},
 	response::{Html, IntoResponse},
 };
 
-use crate::{document::Document, not_found, DB};
+use crate::{document::Document, not_found, Context};
 
 #[derive(Template)]
 #[template(path = "view.html")]
@@ -16,9 +18,12 @@ pub struct ViewTemplate {
 
 pub async fn get(
 	Path(slug): Path<String>,
-	State(db): State<DB>,
+	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
+	let Context { db, .. } = ctx.as_ref();
+
 	let content = db
+		// TODO: Sanitize.
 		.get(&slug)
 		// TODO: Handle DB error.
 		.unwrap()
