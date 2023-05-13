@@ -7,6 +7,7 @@ use axum::{
 };
 
 mod create;
+mod diff;
 mod document;
 mod edit;
 mod search;
@@ -15,6 +16,8 @@ mod view;
 include!(concat!(env!("OUT_DIR"), "/config.rs"));
 const BINCODE_CONFIG: bincode::config::Configuration =
 	bincode::config::standard();
+const PAGE_CF: &str = "page";
+const HIST_CF: &str = "hist";
 
 pub struct Context {
 	// Database.
@@ -27,7 +30,13 @@ pub struct Context {
 #[tokio::main]
 async fn main() {
 	// Database.
-	let db = rocksdb::DB::open_default(LOCAL_DB_PATH).unwrap();
+	// let db = rocksdb::DB::open_default(LOCAL_DB_PATH).unwrap();
+	let mut db_opts = rocksdb::Options::default();
+	db_opts.create_if_missing(true);
+	db_opts.create_missing_column_families(true);
+	let db =
+		rocksdb::DB::open_cf(&db_opts, LOCAL_DB_PATH, vec![PAGE_CF, HIST_CF])
+			.unwrap();
 
 	// Search
 	let search_context = RwLock::new(search::SearchContext::new(&db));

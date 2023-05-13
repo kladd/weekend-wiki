@@ -6,7 +6,7 @@ use axum::{
 	response::{Html, IntoResponse},
 };
 
-use crate::{document::Document, not_found, Context};
+use crate::{document::Document, not_found, Context, PAGE_CF};
 
 #[derive(Template)]
 #[template(path = "view.html")]
@@ -24,7 +24,7 @@ pub async fn get(
 
 	let content = db
 		// TODO: Sanitize.
-		.get(&slug)
+		.get_cf(db.cf_handle(PAGE_CF).unwrap(), &slug)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);

@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{document::Document, Context, CREATE_HTML};
+use crate::{document::Document, Context, CREATE_HTML, PAGE_CF};
 
 #[derive(Deserialize)]
 pub struct CreatePayload {
@@ -28,7 +28,15 @@ pub async fn post(
 	let doc = Document::new(params.title, params.content);
 
 	// TODO: Check for duplicates first?
-	state.db.put(doc.slug().clone(), doc.as_bytes()).unwrap();
+	state
+		.db
+		.put_cf(
+			// TODO: Handles in context.
+			state.db.cf_handle(PAGE_CF).unwrap(),
+			doc.slug().clone(),
+			doc.as_bytes(),
+		)
+		.unwrap();
 
 	// TODO: Update search index.
 	state.search.write().unwrap().update_index(&doc);

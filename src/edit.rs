@@ -8,7 +8,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{document::Document, not_found, Context};
+use crate::{document::Document, not_found, Context, PAGE_CF};
 
 #[derive(Template)]
 #[template(path = "edit.html")]
@@ -22,6 +22,7 @@ pub struct EditPayload {
 	content: String,
 }
 
+#[axum_macros::debug_handler]
 pub async fn get(
 	Path(slug): Path<String>,
 	State(ctx): State<Arc<Context>>,
@@ -30,7 +31,7 @@ pub async fn get(
 
 	let doc = db
 		// TODO: Sanitize.
-		.get(&slug)
+		.get_cf(&db.cf_handle(PAGE_CF).unwrap(), &slug)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);
@@ -59,19 +60,34 @@ pub async fn post(
 ) -> impl IntoResponse {
 	let Context { db, search } = ctx.as_ref();
 
+	let page_cf = db.cf_handle(PAGE_CF).unwrap();
+
 	let doc = db
 		// TODO: Sanitize.
-		.get(&slug)
+		.get_cf(&page_cf, &slug)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);
 
 	if let Some(mut doc) = doc {
+		// TODO: Store this.
+		if let Some(current) = doc.content() {
+			for (line, ch) in
+				diff::lines(current, &params.content).iter().enumerate()
+			{
+				match ch {
+					diff::Result::Left(l) => println!("{line}-{l}"),
+					diff::Result::Both(l, _) => (),
+					diff::Result::Right(r) => println!("{line}+{r}"),
+				}
+			}
+		}
+
 		// TODO: Sanitize.
 		doc.set_content(params.content);
 
 		// TODO: Handle DB error.
-		db.put(doc.slug(), doc.as_bytes()).unwrap();
+		db.put_cf(page_cf, doc.slug(), doc.as_bytes()).unwrap();
 
 		search.write().unwrap().update_index(&doc);
 

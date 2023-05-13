@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 askama = "0.12.0"
+diff = "0.1.13"
 slug = "0.1.4"
 tantivy = "0.19.2"
 
@@ -29,6 +30,7 @@ features = ["macros", "rt-multi-thread"]
 version = "1.0"
 features = ["derive"]
 
+# TODO: Use system lib.
 [dependencies.rocksdb]
 version = "0.20.1"
 features = ["serde"]

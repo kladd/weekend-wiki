@@ -16,6 +16,7 @@ fn main() {
 
 	let config = quote! {
 		const LOCAL_DB_PATH: &str = concat!(env!("OUT_DIR"), "/wiki.db");
+		const LOCAL_GIT_PATH: &str = concat!(env!("OUT_DIR"), "/wiki.git");
 
 		const INDEX_HTML: &str = #index_html;
 		const CREATE_HTML: &str = #create_html;
