@@ -17,14 +17,16 @@ pub struct ViewTemplate<'a> {
 }
 
 pub async fn get(
-	Path(slug): Path<String>,
+	Path((ns, slug)): Path<(String, String)>,
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
+	let key = format!("{ns}/{slug}");
+
 	let content = db
 		// TODO: Sanitize.
-		.get_cf(db.cf_handle(PAGE_CF).unwrap(), &slug)
+		.get_cf(db.cf_handle(PAGE_CF).unwrap(), key)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);

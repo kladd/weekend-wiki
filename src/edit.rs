@@ -28,14 +28,16 @@ pub struct EditPayload {
 
 #[axum_macros::debug_handler]
 pub async fn get(
-	Path(slug): Path<String>,
+	Path((ns, slug)): Path<(String, String)>,
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
+	let key = format!("{ns}/{slug}");
+
 	let doc = db
 		// TODO: Sanitize.
-		.get_cf(&db.cf_handle(PAGE_CF).unwrap(), &slug)
+		.get_cf(&db.cf_handle(PAGE_CF).unwrap(), &key)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);
@@ -57,19 +59,20 @@ pub async fn get(
 
 #[axum_macros::debug_handler]
 pub async fn post(
-	Path(slug): Path<String>,
+	Path((ns, slug)): Path<(String, String)>,
 	State(ctx): State<Arc<Context>>,
 	// TODO: Custom rejection.
 	Form(params): Form<EditPayload>,
 ) -> impl IntoResponse {
 	let Context { db, search } = ctx.as_ref();
 
+	let key = format!("{ns}/{slug}");
 	let hist_cf = db.cf_handle(HIST_CF).unwrap();
 	let page_cf = db.cf_handle(PAGE_CF).unwrap();
 
 	let doc = db
 		// TODO: Sanitize.
-		.get_cf(&page_cf, &slug)
+		.get_cf(&page_cf, &key)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);
@@ -78,7 +81,7 @@ pub async fn post(
 		// TODO: Move this.
 		if let Some(current) = doc.content() {
 			let tx = db.transaction();
-			let version_key = HistoryVersionRecord::key(&slug);
+			let version_key = HistoryVersionRecord::key(&ns, &slug);
 			let version = tx
 				// TODO: Brittle.
 				.get_cf(&hist_cf, &version_key)
@@ -89,7 +92,7 @@ pub async fn post(
 				.unwrap();
 			tx.put_cf(
 				&hist_cf,
-				HistoryRecord::key(&slug, version),
+				HistoryRecord::key(&ns, &slug, version),
 				HistoryRecord::new(&slug, current, params.content.as_str())
 					.as_bytes(),
 			)
@@ -101,12 +104,12 @@ pub async fn post(
 		doc.set_content(params.content);
 
 		// TODO: Handle DB error.
-		db.put_cf(page_cf, doc.slug(), doc.as_bytes()).unwrap();
+		db.put_cf(page_cf, key, doc.as_bytes()).unwrap();
 
-		search.write().unwrap().update_index(&doc);
+		search.write().unwrap().update_index(&ns, &doc);
 
-		Redirect::to(&format!("/{slug}"))
+		Redirect::to(&format!("/{ns}/{slug}"))
 	} else {
-		Redirect::to(&format!("/{slug}/edit?error=YES"))
+		Redirect::to(&format!("/{ns}/{slug}/edit?error=YES"))
 	}
 }

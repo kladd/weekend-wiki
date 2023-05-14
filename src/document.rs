@@ -2,6 +2,9 @@ use slug::slugify;
 
 use crate::BINCODE_CONFIG;
 
+#[derive(Debug)]
+pub struct DocumentKey(pub String, pub String);
+
 #[derive(bincode::Encode, bincode::Decode)]
 pub struct Document {
 	title: String,
@@ -10,6 +13,7 @@ pub struct Document {
 }
 
 impl Document {
+	// TODO: Better signature.
 	pub fn new(title: String, content: Option<String>) -> Self {
 		Self {
 			title: title.clone(),
@@ -50,5 +54,17 @@ impl Document {
 		let (doc, _) =
 			bincode::decode_from_slice(bytes.as_ref(), BINCODE_CONFIG).unwrap();
 		doc
+	}
+}
+
+impl DocumentKey {
+	pub fn from_bytes<B>(bytes: B) -> Self
+	where
+		B: AsRef<[u8]>,
+	{
+		// TODO: Decoding errors.
+		let key_str = String::from_utf8(bytes.as_ref().to_vec()).unwrap();
+		let (ns, slug) = key_str.split_once('/').unwrap();
+		Self(ns.to_string(), slug.to_string())
 	}
 }

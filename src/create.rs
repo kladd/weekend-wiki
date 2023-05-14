@@ -12,7 +12,7 @@ use crate::{document::Document, Context, CREATE_HTML, PAGE_CF};
 #[derive(Deserialize)]
 pub struct CreatePayload {
 	title: String,
-	content: Option<String>,
+	namespace: String,
 }
 
 pub async fn get() -> impl IntoResponse {
@@ -25,7 +25,10 @@ pub async fn post(
 	Form(params): Form<CreatePayload>,
 ) -> impl IntoResponse {
 	// TODO: Sanitize.
-	let doc = Document::new(params.title, params.content);
+	let doc = Document::new(params.title, None);
+
+	let ns = params.namespace;
+	let key = format!("{ns}/{}", doc.slug());
 
 	// TODO: Check for duplicates first?
 	state
@@ -33,13 +36,13 @@ pub async fn post(
 		.put_cf(
 			// TODO: Handles in context.
 			state.db.cf_handle(PAGE_CF).unwrap(),
-			doc.slug().clone(),
+			key,
 			doc.as_bytes(),
 		)
 		.unwrap();
 
 	// TODO: Update search index.
-	state.search.write().unwrap().update_index(&doc);
+	state.search.write().unwrap().update_index(&ns, &doc);
 
-	Redirect::to(&format!("/{}", doc.slug()))
+	Redirect::to(&format!("/{ns}/{}", doc.slug()))
 }
