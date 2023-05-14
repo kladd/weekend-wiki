@@ -8,7 +8,11 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{document::Document, not_found, Context, PAGE_CF};
+use crate::{
+	document::Document,
+	history::{HistoryRecord, HistoryVersion},
+	not_found, Context, HIST_CF, PAGE_CF,
+};
 
 #[derive(Template)]
 #[template(path = "edit.html")]
@@ -60,6 +64,7 @@ pub async fn post(
 ) -> impl IntoResponse {
 	let Context { db, search } = ctx.as_ref();
 
+	let hist_cf = db.cf_handle(HIST_CF).unwrap();
 	let page_cf = db.cf_handle(PAGE_CF).unwrap();
 
 	let doc = db
@@ -70,17 +75,30 @@ pub async fn post(
 		.map(Document::from_bytes);
 
 	if let Some(mut doc) = doc {
-		// TODO: Store this.
-		if let Some(current) = doc.content() {
-			for (line, ch) in
-				diff::lines(current, &params.content).iter().enumerate()
-			{
-				match ch {
-					diff::Result::Left(l) => println!("{line}-{l}"),
-					diff::Result::Both(l, _) => (),
-					diff::Result::Right(r) => println!("{line}+{r}"),
-				}
-			}
+		// TODO: Move this.
+		if let Some(current) = dbg!(doc.content()) {
+			let tx = db.transaction();
+			let version_key = format!("{}:VERSION", &slug);
+			let version = tx
+				// TODO: Brittle.
+				.get_cf(&hist_cf, &version_key)
+				.unwrap()
+				.map(HistoryVersion::from)
+				.unwrap_or(HistoryVersion::default());
+			tx.put_cf(&hist_cf, version_key, version.next().as_bytes())
+				.unwrap();
+			tx.put_cf(
+				&hist_cf,
+				dbg!(format!("{slug}:{}", version.0)),
+				dbg!(HistoryRecord::new(
+					&slug,
+					current,
+					params.content.as_str()
+				))
+				.as_bytes(),
+			)
+			.unwrap();
+			tx.commit().unwrap();
 		}
 
 		// TODO: Sanitize.

@@ -10,10 +10,10 @@ use crate::{document::Document, not_found, Context, PAGE_CF};
 
 #[derive(Template)]
 #[template(path = "view.html")]
-pub struct ViewTemplate {
-	pub(crate) title: String,
-	pub(crate) body: String,
-	pub(crate) slug: String,
+pub struct ViewTemplate<'a> {
+	pub(crate) title: &'a str,
+	pub(crate) body: &'a str,
+	pub(crate) slug: &'a str,
 }
 
 pub async fn get(
@@ -32,9 +32,9 @@ pub async fn get(
 	if let Some(doc) = content {
 		Html(
 			ViewTemplate {
-				title: doc.title().clone(),
-				body: doc.content().map(String::clone).unwrap_or_default(),
-				slug: doc.slug().clone(),
+				title: doc.title(),
+				body: doc.content().map(String::as_str).unwrap_or(""),
+				slug: doc.slug(),
 			}
 			.render()
 			.unwrap(),

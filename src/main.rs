@@ -5,11 +5,12 @@ use axum::{
 	response::{Html, IntoResponse},
 	routing, Router,
 };
+use rocksdb::{TransactionDB, TransactionDBOptions};
 
 mod create;
-mod diff;
 mod document;
 mod edit;
+mod history;
 mod search;
 mod view;
 
@@ -21,7 +22,7 @@ const HIST_CF: &str = "hist";
 
 pub struct Context {
 	// Database.
-	db: rocksdb::DB,
+	db: TransactionDB,
 
 	// Searching.
 	search: RwLock<search::SearchContext>,
@@ -34,9 +35,13 @@ async fn main() {
 	let mut db_opts = rocksdb::Options::default();
 	db_opts.create_if_missing(true);
 	db_opts.create_missing_column_families(true);
-	let db =
-		rocksdb::DB::open_cf(&db_opts, LOCAL_DB_PATH, vec![PAGE_CF, HIST_CF])
-			.unwrap();
+	let db = rocksdb::TransactionDB::open_cf(
+		&db_opts,
+		&TransactionDBOptions::default(),
+		LOCAL_DB_PATH,
+		vec![PAGE_CF, HIST_CF],
+	)
+	.unwrap();
 
 	// Search
 	let search_context = RwLock::new(search::SearchContext::new(&db));
@@ -54,6 +59,7 @@ async fn main() {
 		.route("/create", routing::get(create::get))
 		.route("/create", routing::post(create::post))
 		.route("/read/:slug", routing::get(view::get))
+		.route("/read/:slug/history", routing::get(history::get))
 		.route("/write/:slug", routing::get(edit::get))
 		.route("/write/:slug", routing::post(edit::post))
 		.fallback(not_found)

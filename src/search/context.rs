@@ -4,10 +4,10 @@ use tantivy::{
 	doc,
 	query::QueryParser,
 	schema::{Field, Schema, STORED, TEXT},
-	Index, IndexWriter,
+	Index, IndexWriter, Term,
 };
 
-use crate::document::Document;
+use crate::{document::Document, PAGE_CF};
 
 pub struct SearchContext {
 	index: Index,
@@ -26,7 +26,7 @@ pub struct QueryResult {
 impl SearchContext {
 	const INDEX_SIZE_BYTES: usize = 0x300_000; // 3MB is the minimum.
 
-	pub fn new(db: &rocksdb::DB) -> Self {
+	pub fn new(db: &rocksdb::TransactionDB) -> Self {
 		let mut schema_builder = Schema::builder();
 		let slug = schema_builder.add_text_field("slug", TEXT | STORED);
 		let title = schema_builder.add_text_field("title", TEXT | STORED);
@@ -37,11 +37,17 @@ impl SearchContext {
 
 		// TODO: Obviously this won't scale forever, but I'm curious of how long
 		//       it will.
-		for (_, doc) in db.iterator(IteratorMode::Start).map(Result::unwrap) {
+		for (_, doc) in db
+			.full_iterator_cf(
+				db.cf_handle(PAGE_CF).unwrap(),
+				IteratorMode::Start,
+			)
+			.map(Result::unwrap)
+		{
 			let doc = Document::from_bytes(doc);
 			index_writer
 				.add_document(doc!(
-					slug => doc.slug().as_str(),
+					slug => dbg!(doc.slug().as_str()),
 					title => doc.title().as_str(),
 					// TODO: These getters are terrible.
 					content => doc.content().unwrap_or(&String::new()).as_str()
@@ -95,6 +101,8 @@ impl SearchContext {
 
 	pub fn update_index(&mut self, doc: &Document) {
 		self.index_writer
+			.delete_term(Term::from_field_text(self.f_slug, doc.slug()));
+		self.index_writer
 			.add_document(doc!(
 				self.f_slug => doc.slug().clone(),
 				self.f_title => doc.title().clone(),
@@ -102,6 +110,7 @@ impl SearchContext {
 			))
 			// TODO: Handle error.
 			.unwrap();
+
 		// TODO: Handle error.
 		self.index_writer.commit().unwrap();
 	}
