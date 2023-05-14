@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::{
 	document::Document,
-	history::{HistoryRecord, HistoryVersion},
+	history::db::{HistoryRecord, HistoryVersionRecord},
 	not_found, Context, HIST_CF, PAGE_CF,
 };
 
@@ -76,26 +76,22 @@ pub async fn post(
 
 	if let Some(mut doc) = doc {
 		// TODO: Move this.
-		if let Some(current) = dbg!(doc.content()) {
+		if let Some(current) = doc.content() {
 			let tx = db.transaction();
-			let version_key = format!("{}:VERSION", &slug);
+			let version_key = HistoryVersionRecord::key(&slug);
 			let version = tx
 				// TODO: Brittle.
 				.get_cf(&hist_cf, &version_key)
 				.unwrap()
-				.map(HistoryVersion::from)
-				.unwrap_or(HistoryVersion::default());
+				.map(HistoryVersionRecord::from_bytes)
+				.unwrap_or(HistoryVersionRecord::default());
 			tx.put_cf(&hist_cf, version_key, version.next().as_bytes())
 				.unwrap();
 			tx.put_cf(
 				&hist_cf,
-				dbg!(format!("{slug}:{}", version.0)),
-				dbg!(HistoryRecord::new(
-					&slug,
-					current,
-					params.content.as_str()
-				))
-				.as_bytes(),
+				HistoryRecord::key(&slug, version),
+				HistoryRecord::new(&slug, current, params.content.as_str())
+					.as_bytes(),
 			)
 			.unwrap();
 			tx.commit().unwrap();

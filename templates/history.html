@@ -2,20 +2,32 @@
 <html lang="en-US"><!-- 🦅 -->
 <head>
     <title> {{ title }} - History - Weekend</title></head>
+    <style>
+        {% include "css/main.css" %}
+    </style>
 <body>
-<p>
-    <a href="/">Home</a>
-</p>
-<h1>History of &ldquo;<em>{{ title }}</em>&rdquo;</h1>
-
-<a href="/read/{{ slug }}">Read</a> | <a href="/write/{{ slug }}">Edit</a>
-
-{% for entry in versions %}
-<section>
-    <h2>{{ entry.version }}</h2>
-    <pre>{{ entry.diff }}</pre>
-</section>
-{% endfor %}
-
+<div id="wk-container">
+    <header>
+        <p>
+            <a href="/">Home</a>
+        </p>
+    </header>
+    <main>
+        <h1>History of &ldquo;<em>{{ title }}</em>&rdquo;</h1>
+        <div id="actions">
+            <p>
+                <a href="/read/{{ slug }}">Read</a> | <a href="/write/{{ slug }}">Edit</a>
+            </p>
+        </div>
+        <div id="content">
+            {% for entry in revisions %}
+            <section>
+                <h2>Revision {{ entry.version }}</h2>
+                <pre>{{ entry.delta }}</pre>
+            </section>
+            {% endfor %}
+        </div>
+    </main>
+</div>
 </body>
 </html>

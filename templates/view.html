@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US"><!-- 🦅 -->
 <head>
     <title>{{ title }}</title>
     <style>
@@ -20,7 +20,9 @@
                 <a href="/write/{{ slug }}">Edit</a> | <a href="/read/{{ slug }}/history">History</a>
             </p>
         </div>
-        {{ body|markdown }}
+        <div id="content">
+            {{ body|markdown }}
+        </div>
     </main>
 </div>
 </body>

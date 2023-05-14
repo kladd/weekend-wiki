@@ -44,9 +44,8 @@ features = ["derive"]
 
 # TODO: Use system lib.
 [dependencies.rocksdb]
-version = "0.20.1"
+version = "0.21.0"
 features = ["serde"]
 
 [build-dependencies]
 quote = "1.0.26"
-base64 = "0.21.0"
