@@ -49,3 +49,4 @@ features = ["serde"]
 
 [build-dependencies]
 quote = "1.0.26"
+base64 = "0.21.0"

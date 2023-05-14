@@ -1,5 +1,6 @@
 use std::{env, fs, fs::File, io::Write, path::Path};
 
+use base64::prelude::{Engine as _, BASE64_STANDARD, BASE64_STANDARD_NO_PAD};
 use quote::quote;
 
 const CONFIG_FILE: &str = "config.rs";
