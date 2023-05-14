@@ -4,6 +4,14 @@
     <title> {{ title }} - History - Weekend</title></head>
     <style>
         {% include "css/main.css" %}
+        .diff {
+            font-family: monospace;
+            white-space: pre-wrap;
+            /* Chrome? */
+            white-space-collapse: preserve;
+            max-width: 80ch;
+            font-size: 14px;
+        }
     </style>
 <body>
 <div id="wk-container">
@@ -16,14 +24,14 @@
         <h1>History of &ldquo;<em>{{ title }}</em>&rdquo;</h1>
         <div id="actions">
             <p>
-                <a href="/read/{{ slug }}">Read</a> | <a href="/write/{{ slug }}">Edit</a>
+                <a href="/{{ slug }}">Read</a> | <a href="/{{ slug }}/edit">Edit</a>
             </p>
         </div>
         <div id="content">
             {% for entry in revisions %}
             <section>
                 <h2>Revision {{ entry.version }}</h2>
-                <pre>{{ entry.delta }}</pre>
+                <div class="diff">{{ entry.delta }}</div>
             </section>
             {% endfor %}
         </div>

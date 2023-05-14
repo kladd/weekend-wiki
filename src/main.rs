@@ -6,6 +6,7 @@ use axum::{
 	routing, Router,
 };
 use rocksdb::{TransactionDB, TransactionDBOptions};
+use tower_http::services::ServeDir;
 
 mod create;
 mod document;
@@ -58,10 +59,11 @@ async fn main() {
 		.route("/search", routing::get(search::get))
 		.route("/create", routing::get(create::get))
 		.route("/create", routing::post(create::post))
-		.route("/read/:slug", routing::get(view::get))
-		.route("/read/:slug/history", routing::get(history::get))
-		.route("/write/:slug", routing::get(edit::get))
-		.route("/write/:slug", routing::post(edit::post))
+		.route("/:slug", routing::get(view::get))
+		.route("/:slug/history", routing::get(history::get))
+		.route("/:slug/edit", routing::get(edit::get))
+		.route("/:slug/edit", routing::post(edit::post))
+		.nest_service("/dist", ServeDir::new("dist"))
 		.fallback(not_found)
 		.with_state(context);
 	let server = tokio::net::TcpListener::bind("127.0.0.1:8080")

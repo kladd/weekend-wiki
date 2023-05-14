@@ -1,18 +1,63 @@
 <!DOCTYPE html>
 <html lang="en-US"><!-- 🦅 -->
 <head>
-    <title>{{ title }}</title></head>
+    <title>{{ title }}</title>
+    <style>
+        {% include "css/main.css" %}
+        #wk-editor {
+            display: grid;
+            grid-column: 1/-1;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
+            grid-column-gap: 32px;
+        }
+        #wk-ed-ta {
+            min-width: 100%;
+            resize: vertical;
+            font-size: 14px;
+            border: 2px solid;
+            border-radius: 3px;
+            padding: 1rem;
+            min-height: 72vh;
+        }
+    </style>
+</head>
 <body>
-<p>
-    <a href="/">Home</a>
-</p>
-<h1>{{ title }}</h1>
+<div id="wk-container">
+    <header>
+        <p>
+            <a href="/">Home</a>
+        </p>
+    </header>
+    <main>
+        <h1 id="title">{{ title }}</h1>
 
-<form action="" method="post" style="display: block">
-    <label for="content">Content:</label>
-    <textarea id="content" name="content" rows="26" cols="80">{{ content }}</textarea>
-    <input type="submit" value="Submit">
-</form>
+        <div id="wk-editor">
+            <div id="wk-ed">
+                <form action="" method="post" style="display: block">
+                    <label for="wk-ed-ta">Content:</label>
+                    <textarea id="wk-ed-ta" name="content">{{ content }}</textarea>
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
 
+            <div id="wk-preview">
+
+            </div>
+        </div>
+    </main>
+</div>
+<script src="/dist/markdown.js"/>
+</script>
+<script>
+    window["markdown"].ready.then(markdown => {
+        let ta = document.getElementById("wk-ed-ta");
+        let pv = document.getElementById("wk-preview");
+        ta.addEventListener("input", (event) => {
+            pv.innerHTML = markdown.parse(event.target.value);
+        })
+        pv.innerHTML = markdown.parse(ta.value);
+    })
+</script>
 </body>
 </html>

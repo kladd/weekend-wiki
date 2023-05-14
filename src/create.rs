@@ -41,5 +41,5 @@ pub async fn post(
 	// TODO: Update search index.
 	state.search.write().unwrap().update_index(&doc);
 
-	Redirect::to(&format!("/read/{}", doc.slug()))
+	Redirect::to(&format!("/{}", doc.slug()))
 }

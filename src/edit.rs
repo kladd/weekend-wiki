@@ -105,8 +105,8 @@ pub async fn post(
 
 		search.write().unwrap().update_index(&doc);
 
-		Redirect::to(&format!("/read/{slug}"))
+		Redirect::to(&format!("/{slug}"))
 	} else {
-		Redirect::to(&format!("/write/{slug}?error=YES"))
+		Redirect::to(&format!("/{slug}/edit?error=YES"))
 	}
 }

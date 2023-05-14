@@ -9,6 +9,7 @@ patch = "0.7.0"
 slug = "0.1.4"
 tantivy = "0.19.2"
 tower = "0.4.13"
+tower-http = { version = "0.4.0", features = ["fs"] }
 unified-diff = "0.2.1"
 
 [dependencies.axum]
@@ -24,7 +25,6 @@ features = ["markdown"]
 version = "0.18.0"
 default-features = false
 features = []
-
 
 [dependencies.axum-macros]
 git = "https://github.com/tokio-rs/axum"

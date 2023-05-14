@@ -2,17 +2,33 @@
 <html lang="en-US"><!-- 🦅 -->
 <head>
     <title>{{ query }} - Search results - Weekend</title></head>
+    <style>
+        {% include "css/main.css" %}
+    </style>
 <body>
-<p>
-    <a href="/">Home</a> | <a href="/create">Create</a>
-</p>
-<h1>Results for &ldquo;<em>{{ query }}</em>&rdquo;</h1>
+<div id="wk-container">
+    <header>
+        <p>
+            <a href="/">Home</a>
+        </p>
+    </header>
+    <main>
+        <h1>Results for &ldquo;<em>{{ query }}</em>&rdquo;</h1>
+        <div id="actions">
+            <p>
+                <a href="/create">Create</a>
+            </p>
+        </div>
 
-{% for entry in results %}
-<section>
-    <h2><a href="/read/{{ entry.slug }}">{{ entry.title }}</a></h2>
-</section>
-{% endfor %}
+        <div id="content" class="read-content">
+            {% for entry in results %}
+            <section>
+                <h2><a href="/{{ entry.slug }}">{{ entry.title }}</a></h2>
+            </section>
+            {% endfor %}
+        </div>
 
+    </main>
+</div>
 </body>
 </html>
