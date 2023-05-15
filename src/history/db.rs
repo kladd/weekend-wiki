@@ -1,6 +1,6 @@
 use bincode::{Decode, Encode};
 
-use crate::{history::delta::Delta, BINCODE_CONFIG};
+use crate::history::delta::Delta;
 
 /// namespace/page-name/1       = HistoryRecord { ... }
 /// namespace/page-name/0       = HistoryRecord { ... }
@@ -24,9 +24,9 @@ impl HistoryRecord {
 		format!("{ns}/{slug}/{}", version.next_version)
 	}
 
-	pub fn new(slug: &str, old: &str, new: &str) -> Self {
+	pub fn new(author: &str, old: &str, new: &str) -> Self {
 		Self {
-			delta: Delta::new(slug, old, new),
+			delta: Delta::new(author, old, new),
 		}
 	}
 }
@@ -56,36 +56,5 @@ impl HistoryKey {
 		let key_str = String::from_utf8(bytes.as_ref().to_vec()).unwrap();
 		// TODO: Components?
 		Self(key_str)
-	}
-}
-
-// TODO: These implementations are all identical.
-impl HistoryVersionRecord {
-	pub fn as_bytes(&self) -> Vec<u8> {
-		bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap()
-	}
-
-	pub fn from_bytes<B>(bytes: B) -> Self
-	where
-		B: AsRef<[u8]>,
-	{
-		let (me, _) =
-			bincode::decode_from_slice(bytes.as_ref(), BINCODE_CONFIG).unwrap();
-		me
-	}
-}
-
-impl HistoryRecord {
-	pub fn as_bytes(&self) -> Vec<u8> {
-		bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap()
-	}
-
-	pub fn from_bytes<B>(bytes: B) -> Self
-	where
-		B: AsRef<[u8]>,
-	{
-		let (me, _) =
-			bincode::decode_from_slice(bytes.as_ref(), BINCODE_CONFIG).unwrap();
-		me
 	}
 }

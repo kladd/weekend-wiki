@@ -15,13 +15,22 @@ use slug::slugify;
 use tower_http::services::ServeDir;
 
 use crate::{
+	auth::{
+		add_user_to_namespace,
+		namespace::{Namespace, NamespaceKey},
+		user::{User, UserKey},
+	},
 	document::{Document, DocumentKey},
+	encoding::{AsBytes, FromBytes},
 	history::db::{HistoryKey, HistoryVersionRecord},
 };
 
+mod auth;
+mod control;
 mod create;
 mod document;
 mod edit;
+mod encoding;
 mod history;
 mod search;
 mod view;
@@ -29,8 +38,13 @@ mod view;
 include!(concat!(env!("OUT_DIR"), "/config.rs"));
 const BINCODE_CONFIG: bincode::config::Configuration =
 	bincode::config::standard();
+
+// COLUMN NAMES MUST BE 4 CHARACTERS LONG. NOT FOR ANY TECHNICAL REASON, BUT
+// THIS ALIGNMENT MUST NOT BE BROKEN, OR ELSE.
 const PAGE_CF: &str = "page";
 const HIST_CF: &str = "hist";
+const NSPC_CF: &str = "nspc";
+const USER_CF: &str = "user";
 
 pub struct Context {
 	// Database.
@@ -51,14 +65,14 @@ async fn main() {
 		&db_opts,
 		&TransactionDBOptions::default(),
 		LOCAL_DB_PATH,
-		vec![PAGE_CF, HIST_CF],
+		vec![PAGE_CF, HIST_CF, USER_CF, NSPC_CF],
 	)
 	.unwrap();
 
 	// Populate meta namespace.
 	// TODO: This really doesn't need to happen every time the application
-	// starts.
-	seed_base(&db);
+	//       starts.
+	seed_base(&db).await;
 
 	// Search
 	let search_context = RwLock::new(search::SearchContext::new(&db));
@@ -79,6 +93,11 @@ async fn main() {
 		.route("/:ns/:slug/history", routing::get(history::get))
 		.route("/:ns/:slug/edit", routing::get(edit::get))
 		.route("/:ns/:slug/edit", routing::post(edit::post))
+		.route("/login", routing::get(auth::login::get))
+		.route("/login", routing::post(auth::login::post))
+		.route("/logout", routing::get(auth::logout::get))
+		.route("/control", routing::get(control::get))
+		.route("/control", routing::post(control::post))
 		.route("/dump", routing::get(dump))
 		.nest_service("/dist", ServeDir::new("dist"))
 		.fallback(not_found)
@@ -103,8 +122,8 @@ async fn not_found() -> impl IntoResponse {
 async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let option = db.cf_handle(PAGE_CF).unwrap();
-	let pages = db.full_iterator_cf(&option, IteratorMode::Start);
+	let pages = db
+		.full_iterator_cf(&db.cf_handle(PAGE_CF).unwrap(), IteratorMode::Start);
 	for page in pages {
 		let (k, v) = page.unwrap();
 		println!(
@@ -129,11 +148,37 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		}
 	}
 
+	let nss = db
+		.full_iterator_cf(&db.cf_handle(NSPC_CF).unwrap(), IteratorMode::Start);
+	for ns in nss {
+		let (k, v) = ns.unwrap();
+		println!(
+			"NSPC {:?} => {:?}",
+			NamespaceKey::from_bytes(k),
+			Namespace::from_bytes(v)
+		);
+	}
+
+	let users = db
+		.full_iterator_cf(&db.cf_handle(USER_CF).unwrap(), IteratorMode::Start);
+	for user in users {
+		let (k, v) = user.unwrap();
+		println!(
+			"USER {:?} => {:?}",
+			UserKey::from_bytes(k),
+			User::from_bytes(v)
+		);
+	}
+
 	(StatusCode::OK, "OK")
 }
 
 /// Create pages from the `base` dir.
-fn seed_base(db: &TransactionDB) {
+async fn seed_base(db: &TransactionDB) {
+	let mut meta_user = User::new(User::META, "default");
+	let mut meta_ns = Namespace::new(User::META, User::META, 0o744);
+	add_user_to_namespace(db, &mut meta_user, &mut meta_ns).await;
+
 	let page_db = db.cf_handle(PAGE_CF).unwrap();
 	for dir in fs::read_dir("base").unwrap() {
 		let dir_path = dir.unwrap().path();
@@ -152,7 +197,7 @@ fn seed_base(db: &TransactionDB) {
 				&page_db,
 				format!("{}/{}", namespace.to_str().unwrap(), slugify(title))
 					.as_bytes(),
-				Document::new(title.to_string(), Some(content.unwrap()))
+				Document::new(title.to_string(), 0o644, Some(content.unwrap()))
 					.as_bytes(),
 			)
 			.unwrap();

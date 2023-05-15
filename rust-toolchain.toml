@@ -1,2 +1,3 @@
 [toolchain]
-channel = "nightly" # once_cell: 1.70
+# channel = "nightly" # once_cell: 1.70
+channel = "stable"

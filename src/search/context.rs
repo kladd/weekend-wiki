@@ -9,6 +9,7 @@ use tantivy::{
 
 use crate::{
 	document::{Document, DocumentKey},
+	encoding::FromBytes,
 	PAGE_CF,
 };
 
@@ -77,6 +78,7 @@ impl SearchContext {
 		}
 	}
 
+	// TODO: Any user can search anything and see it, fix that.
 	pub fn query(&self, query: &str) -> Vec<QueryResult> {
 		// TODO: I think reader should be long lived?
 		let searcher = self.index.reader().unwrap().searcher();

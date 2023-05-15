@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+    </style>
+</head>
+<body>
+    <form action="" method="post" style="display: block">
+        <label for="newuser">Username:</label>
+        <input type="text" id="newuser" name="username" placeholder="username" autocomplete="hidden"/>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="password" autocomplete="hidden"/>
+        <input type="submit" value="Create User">
+    </form>
+    <form action="" method="post" style="display: block">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" placeholder="username" autocomplete="hidden"/>
+        <label for="namespace">Namespace:</label>
+        <input type="text" id="namespace" name="namespace" placeholder="namespace" autocomplete="hidden"/>
+        <input type="submit" value="Add User">
+    </form>
+    <form action="" method="post" style="display: block">
+        <label for="namespace">Namespace:</label>
+        <input type="text" id="ns" name="namespace" placeholder="namespace" autocomplete="hidden"/>
+        <label for="namespace">Mode:</label>
+        <input type="number" id="mode" name="mode" placeholder="777" autocomplete="hidden"/>
+        <input type="submit" value="Set Mode">
+    </form>
+</body>
+
+</html>

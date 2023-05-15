@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 diff = "0.1.13"
+futures = "0.3.28"
 patch = "0.7.0"
 slug = "0.1.4"
 tantivy = "0.19.2"
@@ -17,6 +18,15 @@ git = "https://github.com/tokio-rs/axum"
 rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
 features = ["form"]
 
+[dependencies.axum-macros]
+git = "https://github.com/tokio-rs/axum"
+rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
+
+[dependencies.axum-extra]
+git = "https://github.com/tokio-rs/axum"
+rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
+features = ["typed-header"]
+
 [dependencies.askama]
 version = "0.12"
 features = ["markdown"]
@@ -25,10 +35,6 @@ features = ["markdown"]
 version = "0.18.0"
 default-features = false
 features = []
-
-[dependencies.axum-macros]
-git = "https://github.com/tokio-rs/axum"
-rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
 
 [dependencies.bincode]
 git = "https://github.com/bincode-org/bincode"

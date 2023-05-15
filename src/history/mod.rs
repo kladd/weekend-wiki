@@ -8,6 +8,7 @@ use axum::{
 
 use crate::{
 	document::Document,
+	encoding::FromBytes,
 	history::{
 		db::{HistoryKey, HistoryRecord},
 		view::{HistoryRevisionView, HistoryView},

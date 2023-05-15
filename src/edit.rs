@@ -6,10 +6,14 @@ use axum::{
 	response::{Html, IntoResponse, Redirect},
 	Form,
 };
+use axum_extra::{headers, TypedHeader};
 use serde::Deserialize;
 
 use crate::{
+	auth,
+	auth::{namespace::Namespace, user::User, COOKIE_NAME},
 	document::Document,
+	encoding::{AsBytes, FromBytes},
 	history::db::{HistoryRecord, HistoryVersionRecord},
 	not_found, Context, HIST_CF, PAGE_CF,
 };
@@ -29,11 +33,27 @@ pub struct EditPayload {
 #[axum_macros::debug_handler]
 pub async fn get(
 	Path((ns, slug)): Path<(String, String)>,
+	TypedHeader(cookies): TypedHeader<headers::Cookie>,
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
+	let ns = if let Some(ns) = Namespace::get(&db, &ns).await {
+		ns
+	} else {
+		return not_found().await.into_response();
+	};
 
-	let key = format!("{ns}/{slug}");
+	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
+		User::get(&db, username).await
+	} else {
+		None
+	};
+
+	if !ns.user_has_access(&user, auth::READ) {
+		return not_found().await.into_response();
+	}
+
+	let key = format!("{}/{slug}", ns.name);
 
 	let doc = db
 		// TODO: Sanitize.
@@ -61,18 +81,34 @@ pub async fn get(
 pub async fn post(
 	Path((ns, slug)): Path<(String, String)>,
 	State(ctx): State<Arc<Context>>,
+	TypedHeader(cookies): TypedHeader<headers::Cookie>,
 	// TODO: Custom rejection.
 	Form(params): Form<EditPayload>,
 ) -> impl IntoResponse {
 	let Context { db, search } = ctx.as_ref();
 
-	let key = format!("{ns}/{slug}");
-	let hist_cf = db.cf_handle(HIST_CF).unwrap();
-	let page_cf = db.cf_handle(PAGE_CF).unwrap();
+	let ns = if let Some(ns) = Namespace::get(&db, &ns).await {
+		ns
+	} else {
+		return not_found().await.into_response();
+	};
+
+	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
+		User::get(&db, username).await
+	} else {
+		None
+	};
+
+	if !ns.user_has_access(&user, auth::WRITE) {
+		return Redirect::to(&format!("/{}/{slug}/edit?error=EPERM", &ns.name))
+			.into_response();
+	}
+
+	let key = format!("{}/{slug}", ns.name);
 
 	let doc = db
 		// TODO: Sanitize.
-		.get_cf(&page_cf, &key)
+		.get_cf(&db.cf_handle(PAGE_CF).unwrap(), &key)
 		// TODO: Handle DB error.
 		.unwrap()
 		.map(Document::from_bytes);
@@ -81,20 +117,28 @@ pub async fn post(
 		// TODO: Move this.
 		if let Some(current) = doc.content() {
 			let tx = db.transaction();
-			let version_key = HistoryVersionRecord::key(&ns, &slug);
+			let version_key = HistoryVersionRecord::key(&ns.name, &slug);
 			let version = tx
 				// TODO: Brittle.
-				.get_cf(&hist_cf, &version_key)
+				.get_cf(&db.cf_handle(HIST_CF).unwrap(), &version_key)
 				.unwrap()
 				.map(HistoryVersionRecord::from_bytes)
 				.unwrap_or(HistoryVersionRecord::default());
-			tx.put_cf(&hist_cf, version_key, version.next().as_bytes())
-				.unwrap();
 			tx.put_cf(
-				&hist_cf,
-				HistoryRecord::key(&ns, &slug, version),
-				HistoryRecord::new(&slug, current, params.content.as_str())
-					.as_bytes(),
+				&db.cf_handle(HIST_CF).unwrap(),
+				version_key,
+				version.next().as_bytes(),
+			)
+			.unwrap();
+			tx.put_cf(
+				&db.cf_handle(HIST_CF).unwrap(),
+				HistoryRecord::key(&ns.name, &slug, version),
+				HistoryRecord::new(
+					&user.map(|u| u.name).unwrap_or("anonymous".to_string()),
+					current,
+					params.content.as_str(),
+				)
+				.as_bytes(),
 			)
 			.unwrap();
 			tx.commit().unwrap();
@@ -104,12 +148,13 @@ pub async fn post(
 		doc.set_content(params.content);
 
 		// TODO: Handle DB error.
-		db.put_cf(page_cf, key, doc.as_bytes()).unwrap();
+		db.put_cf(db.cf_handle(PAGE_CF).unwrap(), key, doc.as_bytes())
+			.unwrap();
 
-		search.write().unwrap().update_index(&ns, &doc);
+		search.write().unwrap().update_index(&ns.name, &doc);
 
-		Redirect::to(&format!("/{ns}/{slug}"))
+		Redirect::to(&format!("/{}/{slug}", &ns.name)).into_response()
 	} else {
-		Redirect::to(&format!("/{ns}/{slug}/edit?error=YES"))
+		not_found().await.into_response()
 	}
 }

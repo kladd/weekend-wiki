@@ -1,7 +1,5 @@
 use slug::slugify;
 
-use crate::BINCODE_CONFIG;
-
 #[derive(Debug)]
 pub struct DocumentKey(pub String, pub String);
 
@@ -9,13 +7,15 @@ pub struct DocumentKey(pub String, pub String);
 pub struct Document {
 	title: String,
 	slug: String,
+	mode: u16,
 	content: Option<String>,
 }
 
 impl Document {
 	// TODO: Better signature.
-	pub fn new(title: String, content: Option<String>) -> Self {
+	pub fn new(title: String, mode: u16, content: Option<String>) -> Self {
 		Self {
+			mode,
 			title: title.clone(),
 			// TODO: I don't really like that this doesn't retain
 			//       capitalization. Write a slugger like Wikipedia, e.g.
@@ -39,21 +39,6 @@ impl Document {
 
 	pub fn set_content(&mut self, content: String) {
 		self.content = Some(content)
-	}
-
-	pub fn as_bytes(&self) -> Vec<u8> {
-		// TODO: Encoding errors.
-		bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap()
-	}
-
-	pub fn from_bytes<B>(bytes: B) -> Self
-	where
-		B: AsRef<[u8]>,
-	{
-		// TODO: Decoding errors.
-		let (doc, _) =
-			bincode::decode_from_slice(bytes.as_ref(), BINCODE_CONFIG).unwrap();
-		doc
 	}
 }
 
