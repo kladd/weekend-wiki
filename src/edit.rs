@@ -16,7 +16,7 @@ use crate::{
 	history::db::{HistoryRecord, HistoryVersionRecord},
 	not_found,
 	page::Page,
-	Context, HIST_CF,
+	resource_or_return_error, Context, HIST_CF,
 };
 
 #[derive(Template)]
@@ -38,11 +38,8 @@ pub async fn get(
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
-	let ns = if let Some(ns) = Namespace::get(db, &ns).await {
-		ns
-	} else {
-		return not_found().await.into_response();
-	};
+
+	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
 
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
 		User::get(db, username).await
@@ -79,11 +76,7 @@ pub async fn post(
 ) -> impl IntoResponse {
 	let Context { db, search } = ctx.as_ref();
 
-	let ns = if let Some(ns) = Namespace::get(db, &ns).await {
-		ns
-	} else {
-		return not_found().await.into_response();
-	};
+	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
 
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
 		User::get(db, username).await

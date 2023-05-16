@@ -2260,6 +2260,7 @@ dependencies = [
  "serde",
  "slug",
  "tantivy",
+ "thiserror",
  "tokio",
  "tower",
  "tower-http",

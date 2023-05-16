@@ -12,7 +12,7 @@ use crate::{
 	auth::{namespace::Namespace, user::User, COOKIE_NAME},
 	not_found,
 	page::Page,
-	Context,
+	resource_or_return_error, Context,
 };
 
 #[derive(Template)]
@@ -30,11 +30,7 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let ns = if let Some(ns) = Namespace::get(db, &ns).await {
-		ns
-	} else {
-		return not_found().await.into_response();
-	};
+	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
 
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
 		User::get(db, username).await

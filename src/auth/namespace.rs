@@ -7,6 +7,7 @@ use crate::{
 	auth,
 	auth::{has_access, user::User},
 	encoding::{DbDecode, DbEncode},
+	errors::WkError,
 	NSPC_CF,
 };
 
@@ -38,10 +39,12 @@ impl Namespace {
 		}
 	}
 
-	pub async fn get(db: &TransactionDB, name: &str) -> Option<Namespace> {
+	pub async fn get(
+		db: &TransactionDB,
+		name: &str,
+	) -> Result<Option<Namespace>, WkError> {
 		let cf = db.cf_handle(NSPC_CF).unwrap();
-		let bytes = db.get_cf(&cf, name).unwrap()?;
-		Some(Namespace::dec(bytes))
+		Ok(db.get_cf(&cf, name)?.map(Namespace::dec))
 	}
 
 	pub async fn put(db: &TransactionDB, ns: &Self) {

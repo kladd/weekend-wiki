@@ -12,7 +12,7 @@ use crate::{
 	auth::{
 		add_user_to_namespace, namespace::Namespace, user::User, COOKIE_NAME,
 	},
-	Context, CONTROL_HTML,
+	resource_or_return_error, Context, CONTROL_HTML,
 };
 
 #[derive(Deserialize)]
@@ -62,9 +62,11 @@ pub async fn post(
 				namespace,
 			} => {
 				let user = User::get(&state.db, &username).await;
-				let ns = Namespace::get(&state.db, &namespace).await;
+				let ns = resource_or_return_error!(
+					Namespace::get(&state.db, &namespace).await
+				);
 
-				if let (Some(mut user), Some(mut ns)) = (user, ns) {
+				if let (Some(mut user), mut ns) = (user, ns) {
 					add_user_to_namespace(&state.db, &mut user, &mut ns).await;
 					println!("added {user:?} to {ns:?}");
 					Redirect::to("/control?success=YES").into_response()
@@ -73,17 +75,14 @@ pub async fn post(
 				}
 			}
 			ControlParams::SetNamespaceMode { namespace, mode } => {
-				if let Some(mut ns) =
+				let mut ns = resource_or_return_error!(
 					Namespace::get(&state.db, &namespace).await
-				{
-					// TODO: validate input obviously
-					ns.mode = u16::from_str_radix(&mode, 8).unwrap();
-					Namespace::put(&state.db, &ns).await;
-					dbg!(ns);
-					Redirect::to("/control?success=YES").into_response()
-				} else {
-					Redirect::to("/control?error=ENOENT").into_response()
-				}
+				);
+				// TODO: validate input obviously
+				ns.mode = u16::from_str_radix(&mode, 8).unwrap();
+				Namespace::put(&state.db, &ns).await;
+				dbg!(ns);
+				Redirect::to("/control?success=YES").into_response()
 			}
 		}
 	} else {

@@ -11,7 +11,6 @@ use axum::{
 	routing, Router,
 };
 use rocksdb::{IteratorMode, TransactionDB, TransactionDBOptions};
-use slug::slugify;
 use tower_http::services::ServeDir;
 
 use crate::{
@@ -30,6 +29,7 @@ mod control;
 mod create;
 mod edit;
 mod encoding;
+mod errors;
 mod history;
 mod page;
 mod search;

@@ -41,7 +41,12 @@ pub async fn post(
 	};
 
 	let ns = {
-		if let Some(ns) = Namespace::get(&state.db, &params.namespace).await {
+		let ns_maybe = match Namespace::get(&state.db, &params.namespace).await
+		{
+			Ok(ns) => ns,
+			Err(e) => return e.into_response(),
+		};
+		if let Some(ns) = ns_maybe {
 			if !ns.user_has_access(&user, auth::WRITE) {
 				return Redirect::to("/create?error=EPERM").into_response();
 			}
