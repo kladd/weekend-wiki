@@ -1,6 +1,9 @@
 use rocksdb::TransactionDB;
 
-use crate::auth::{namespace::Namespace, user::User};
+use crate::{
+	auth::{namespace::Namespace, user::User},
+	errors::WkError,
+};
 
 pub mod login;
 pub mod logout;
@@ -29,10 +32,10 @@ pub async fn add_user_to_namespace(
 	db: &TransactionDB,
 	user: &mut User,
 	namespace: &mut Namespace,
-) {
+) -> Result<(), WkError> {
 	namespace.members.insert(user.name.clone());
 	user.namespaces.insert(namespace.name.clone());
 	// TODO: Transaction.
 	User::put(db, user).await;
-	Namespace::put(db, namespace).await;
+	Namespace::put(db, namespace).await
 }

@@ -53,9 +53,14 @@ pub async fn post(
 				// TODO: Check exists
 				let mut ns = Namespace::new(&username, &username, 0o700);
 				// TODO: Meta.
-				add_user_to_namespace(&state.db, &mut user, &mut ns).await;
-				println!("added {user:?} to {ns:?}");
-				Redirect::to("/control?success=YES").into_response()
+				if let Err(e) =
+					add_user_to_namespace(&state.db, &mut user, &mut ns).await
+				{
+					e.into_response()
+				} else {
+					println!("added {user:?} to {ns:?}");
+					Redirect::to("/control?success=YES").into_response()
+				}
 			}
 			ControlParams::AddUserToNamespace {
 				username,
@@ -67,9 +72,15 @@ pub async fn post(
 				);
 
 				if let (Some(mut user), mut ns) = (user, ns) {
-					add_user_to_namespace(&state.db, &mut user, &mut ns).await;
-					println!("added {user:?} to {ns:?}");
-					Redirect::to("/control?success=YES").into_response()
+					if let Err(e) =
+						add_user_to_namespace(&state.db, &mut user, &mut ns)
+							.await
+					{
+						e.into_response()
+					} else {
+						println!("added {user:?} to {ns:?}");
+						Redirect::to("/control?success=YES").into_response()
+					}
 				} else {
 					Redirect::to("/control?error=ENOENT").into_response()
 				}
@@ -80,7 +91,9 @@ pub async fn post(
 				);
 				// TODO: validate input obviously
 				ns.mode = u16::from_str_radix(&mode, 8).unwrap();
-				Namespace::put(&state.db, &ns).await;
+				if let Err(e) = Namespace::put(&state.db, &ns).await {
+					return e.into_response();
+				}
 				dbg!(ns);
 				Redirect::to("/control?success=YES").into_response()
 			}

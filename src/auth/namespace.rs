@@ -47,9 +47,9 @@ impl Namespace {
 		Ok(db.get_cf(&cf, name)?.map(Namespace::dec))
 	}
 
-	pub async fn put(db: &TransactionDB, ns: &Self) {
+	pub async fn put(db: &TransactionDB, ns: &Self) -> Result<(), WkError> {
 		let cf = db.cf_handle(NSPC_CF).unwrap();
-		db.put_cf(&cf, &ns.name, ns.enc()).unwrap()
+		db.put_cf(&cf, &ns.name, ns.enc()).map_err(WkError::from)
 	}
 
 	pub async fn list(db: &TransactionDB) -> Vec<Namespace> {

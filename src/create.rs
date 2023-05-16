@@ -59,7 +59,11 @@ pub async fn post(
 			let mut user = user;
 			let mut new_ns =
 				Namespace::new(&params.namespace, &user.name, 0o755);
-			add_user_to_namespace(&state.db, &mut user, &mut new_ns).await;
+			if let Err(e) =
+				add_user_to_namespace(&state.db, &mut user, &mut new_ns).await
+			{
+				return e.into_response();
+			}
 			new_ns
 		} else {
 			return Redirect::to("/login").into_response();

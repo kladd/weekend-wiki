@@ -15,11 +15,11 @@ use tower_http::services::ServeDir;
 
 use crate::{
 	auth::{
-		add_user_to_namespace, namespace,
+		add_user_to_namespace,
 		namespace::{Namespace, NamespaceKey},
 		user::{User, UserKey},
 	},
-	encoding::{DbDecode, DbEncode},
+	encoding::DbDecode,
 	history::db::{HistoryKey, HistoryVersionRecord},
 	page::{Page, PageKey},
 };
@@ -163,9 +163,11 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 async fn seed_base(db: &TransactionDB) {
 	let mut meta_user = User::new(User::META, "default");
 	let mut meta_ns = Namespace::new(User::META, User::META, 0o744);
-	add_user_to_namespace(db, &mut meta_user, &mut meta_ns).await;
+	// Panics: We're initializing, so prefer to crash here.
+	add_user_to_namespace(db, &mut meta_user, &mut meta_ns)
+		.await
+		.unwrap();
 
-	let page_db = db.cf_handle(PAGE_CF).unwrap();
 	for dir in fs::read_dir("base").unwrap() {
 		let dir_path = dir.unwrap().path();
 		let namespace = dir_path.file_name().unwrap();
