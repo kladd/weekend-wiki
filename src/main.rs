@@ -16,7 +16,7 @@ use tower_http::services::ServeDir;
 
 use crate::{
 	auth::{
-		add_user_to_namespace,
+		add_user_to_namespace, namespace,
 		namespace::{Namespace, NamespaceKey},
 		user::{User, UserKey},
 	},
@@ -104,7 +104,7 @@ async fn main() {
 		.fallback(not_found)
 		.with_state(context);
 
-	let server = tokio::net::TcpListener::bind("127.0.0.0:8080")
+	let server = tokio::net::TcpListener::bind("127.0.0.1:8080")
 		.await
 		.unwrap();
 
@@ -179,13 +179,12 @@ async fn seed_base(db: &TransactionDB) {
 				Path::file_stem(fname.as_ref()).unwrap().to_str().unwrap();
 			let content = fs::read_to_string(firent.path());
 
-			db.put_cf(
-				&page_db,
-				format!("{}/{}", namespace.to_str().unwrap(), slugify(title))
-					.as_bytes(),
-				Page::new(title, 0o644, Some(content.unwrap())).enc(),
+			Page::put(
+				db,
+				namespace.to_str().unwrap(),
+				&Page::new(title, 0o644, Some(content.unwrap())),
 			)
-			.unwrap();
+			.await
 		}
 	}
 }

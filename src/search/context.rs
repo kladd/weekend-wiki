@@ -22,7 +22,8 @@ pub struct SearchContext {
 }
 
 pub struct QueryResult {
-	pub(super) path: String,
+	pub(super) namespace: String,
+	pub(super) slug: String,
 	pub(super) title: String,
 }
 
@@ -88,9 +89,12 @@ impl SearchContext {
 				.as_facet()
 				.unwrap()
 				.to_path_string();
-			let (_ns, _slug) = path.split_once('/').unwrap();
+			let (ns, slug) = &path[1..] // remove leading slash
+				.split_once('/')
+				.unwrap();
 			results.push(QueryResult {
-				path,
+				namespace: ns.to_string(),
+				slug: slug.to_string(),
 				title: doc
 					.get_first(self.f_title)
 					.unwrap()

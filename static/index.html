@@ -1,16 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-US"><!-- 🦅 -->
+<head>
+    <title>Weekend</title>
+    <link rel="stylesheet" type="text/css" href="/dist/main.css"/>
+    <style>
+        input#query {
+            padding: 1rem;
+        }
+    </style>
+</head>
 <body>
-<p>
-    Hell world.
-</p>
-<form action="/search" method="get">
-    <label for="query">Search</label>
-    <input type="text" name="q" id="query">
-</form>
-<p>
-    <a href="/create">Create a page</a>
-</p>
+<div id="wk-container">
+    <header>
+        <p>
+            <a href="/create">Create a page</a>
+        </p>
+    </header>
+    <main>
+        <p>
+            Hell world.
+        </p>
+        <form action="/search" method="get">
+            <input placeholder="Search" type="text" name="q" id="query" autofocus="autofocus" autocomplete="off"
+                   accesskey="F" size="20">
+        </form>
+    </main>
+</div>
 </body>
 
 </html>

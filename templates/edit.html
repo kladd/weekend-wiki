@@ -20,6 +20,18 @@
             padding: 1rem;
             min-height: 72vh;
         }
+        #wk-preview {
+            background-color: white;
+            border-radius: 5px;
+            padding: 1rem 2rem;
+            box-shadow: rgba(0, 0, 0, 0.16) 0 1px 4px;
+
+            min-height: 26lh;
+            max-width: 80ch;
+        }
+        #wk-preview :first-child {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -34,21 +46,25 @@
 
         <div id="wk-editor">
             <div id="wk-ed">
+                <p>Edit</p>
                 <form action="" method="post" style="display: block">
-                    <label for="wk-ed-ta">Content:</label>
                     <textarea id="wk-ed-ta" name="content">{{ content }}</textarea>
                     <input type="submit" value="Submit">
                 </form>
             </div>
 
-            <div id="wk-preview">
+            <div>
+                <p>
+                    Preview
+                </p>
+                <div id="wk-preview">
 
+                </div>
             </div>
         </div>
     </main>
 </div>
-<script src="/dist/markdown.js"/>
-</script>
+<script src="/dist/markdown.js"/></script>
 <script>
     window["markdown"].ready.then(markdown => {
         let ta = document.getElementById("wk-ed-ta");
