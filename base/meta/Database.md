@@ -17,5 +17,11 @@ namespace/slug         => Doc
 ### Users
 
 ```
-users/slug             => User
+username               => User
+```
+
+### Namespaces
+
+```
+namespace              => Namespace
 ```

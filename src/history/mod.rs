@@ -7,13 +7,14 @@ use axum::{
 };
 
 use crate::{
-	document::Document,
-	encoding::FromBytes,
+	encoding::DbDecode,
 	history::{
 		db::{HistoryKey, HistoryRecord},
 		view::{HistoryRevisionView, HistoryView},
 	},
-	not_found, Context, HIST_CF, PAGE_CF,
+	not_found,
+	page::Page,
+	Context, HIST_CF, PAGE_CF,
 };
 
 pub mod db;
@@ -33,7 +34,7 @@ pub async fn get(
 	// Check that the document exists.
 	let doc_maybe = db.get_cf(db.cf_handle(PAGE_CF).unwrap(), &key).unwrap();
 	let page = match doc_maybe {
-		Some(bytes) => Document::from_bytes(bytes),
+		Some(bytes) => Page::dec(bytes),
 		_ => return not_found().await.into_response(),
 	};
 
@@ -50,7 +51,7 @@ pub async fn get(
 				// Skip VERSION records, ... or prefixes that match this slug?
 				None
 			} else {
-				Some((HistoryKey(history_key), HistoryRecord::from_bytes(v)))
+				Some((HistoryKey(history_key), HistoryRecord::dec(v)))
 			}
 		})
 		// Map storage records to display records.

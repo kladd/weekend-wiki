@@ -3,16 +3,16 @@ use std::sync::Arc;
 use askama::Template;
 use axum::{
 	extract::{Path, State},
-	response::{Html, IntoResponse, Redirect},
+	response::{Html, IntoResponse},
 };
 use axum_extra::{headers, TypedHeader};
 
 use crate::{
 	auth,
 	auth::{namespace::Namespace, user::User, COOKIE_NAME},
-	document::Document,
-	encoding::FromBytes,
-	not_found, Context, PAGE_CF,
+	not_found,
+	page::Page,
+	Context,
 };
 
 #[derive(Template)]
@@ -30,14 +30,14 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let ns = if let Some(ns) = Namespace::get(&db, &ns).await {
+	let ns = if let Some(ns) = Namespace::get(db, &ns).await {
 		ns
 	} else {
 		return not_found().await.into_response();
 	};
 
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(&db, username).await
+		User::get(db, username).await
 	} else {
 		None
 	};
@@ -46,20 +46,14 @@ pub async fn get(
 		return not_found().await.into_response();
 	}
 
-	let key = format!("{}/{slug}", ns.name);
-
-	let content = db
-		// TODO: Sanitize.
-		.get_cf(db.cf_handle(PAGE_CF).unwrap(), key)
-		// TODO: Handle DB error.
-		.unwrap()
-		.map(Document::from_bytes);
+	// TODO: Sanitize.
+	let content = Page::get(db, &ns.name, &slug).await;
 
 	if let Some(doc) = content {
 		Html(
 			ViewTemplate {
 				title: doc.title(),
-				body: doc.content().map(String::as_str).unwrap_or(""),
+				body: doc.content(),
 				slug: doc.slug(),
 			}
 			.render()

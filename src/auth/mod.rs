@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use rocksdb::TransactionDB;
 
 use crate::auth::{namespace::Namespace, user::User};

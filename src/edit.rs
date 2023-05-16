@@ -12,10 +12,11 @@ use serde::Deserialize;
 use crate::{
 	auth,
 	auth::{namespace::Namespace, user::User, COOKIE_NAME},
-	document::Document,
-	encoding::{AsBytes, FromBytes},
+	encoding::{DbDecode, DbEncode},
 	history::db::{HistoryRecord, HistoryVersionRecord},
-	not_found, Context, HIST_CF, PAGE_CF,
+	not_found,
+	page::Page,
+	Context, HIST_CF,
 };
 
 #[derive(Template)]
@@ -37,14 +38,14 @@ pub async fn get(
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
-	let ns = if let Some(ns) = Namespace::get(&db, &ns).await {
+	let ns = if let Some(ns) = Namespace::get(db, &ns).await {
 		ns
 	} else {
 		return not_found().await.into_response();
 	};
 
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(&db, username).await
+		User::get(db, username).await
 	} else {
 		None
 	};
@@ -53,20 +54,11 @@ pub async fn get(
 		return not_found().await.into_response();
 	}
 
-	let key = format!("{}/{slug}", ns.name);
-
-	let doc = db
-		// TODO: Sanitize.
-		.get_cf(&db.cf_handle(PAGE_CF).unwrap(), &key)
-		// TODO: Handle DB error.
-		.unwrap()
-		.map(Document::from_bytes);
-
-	if let Some(doc) = doc {
+	if let Some(page) = Page::get(db, &ns.name, &slug).await {
 		Html(
 			EditTemplate {
-				title: doc.title().clone(),
-				content: doc.content().map(String::clone).unwrap_or_default(),
+				title: page.title().to_string(),
+				content: page.content().to_string(),
 			}
 			.render()
 			.unwrap(),
@@ -87,14 +79,14 @@ pub async fn post(
 ) -> impl IntoResponse {
 	let Context { db, search } = ctx.as_ref();
 
-	let ns = if let Some(ns) = Namespace::get(&db, &ns).await {
+	let ns = if let Some(ns) = Namespace::get(db, &ns).await {
 		ns
 	} else {
 		return not_found().await.into_response();
 	};
 
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(&db, username).await
+		User::get(db, username).await
 	} else {
 		None
 	};
@@ -104,54 +96,42 @@ pub async fn post(
 			.into_response();
 	}
 
-	let key = format!("{}/{slug}", ns.name);
-
-	let doc = db
-		// TODO: Sanitize.
-		.get_cf(&db.cf_handle(PAGE_CF).unwrap(), &key)
-		// TODO: Handle DB error.
-		.unwrap()
-		.map(Document::from_bytes);
-
-	if let Some(mut doc) = doc {
+	if let Some(mut page) = Page::get(db, &ns.name, &slug).await {
 		// TODO: Move this.
-		if let Some(current) = doc.content() {
-			let tx = db.transaction();
-			let version_key = HistoryVersionRecord::key(&ns.name, &slug);
-			let version = tx
-				// TODO: Brittle.
-				.get_cf(&db.cf_handle(HIST_CF).unwrap(), &version_key)
-				.unwrap()
-				.map(HistoryVersionRecord::from_bytes)
-				.unwrap_or(HistoryVersionRecord::default());
-			tx.put_cf(
-				&db.cf_handle(HIST_CF).unwrap(),
-				version_key,
-				version.next().as_bytes(),
+		let tx = db.transaction();
+		let version_key = HistoryVersionRecord::key(&ns.name, &slug);
+		let version = tx
+			// TODO: Brittle.
+			.get_cf(&db.cf_handle(HIST_CF).unwrap(), &version_key)
+			.unwrap()
+			.map(HistoryVersionRecord::dec)
+			.unwrap_or(HistoryVersionRecord::default());
+		tx.put_cf(
+			&db.cf_handle(HIST_CF).unwrap(),
+			version_key,
+			version.next().enc(),
+		)
+		.unwrap();
+		tx.put_cf(
+			&db.cf_handle(HIST_CF).unwrap(),
+			HistoryRecord::key(&ns.name, &slug, version),
+			HistoryRecord::new(
+				&user.map(|u| u.name).unwrap_or("anonymous".to_string()),
+				page.content(),
+				params.content.as_str(),
 			)
-			.unwrap();
-			tx.put_cf(
-				&db.cf_handle(HIST_CF).unwrap(),
-				HistoryRecord::key(&ns.name, &slug, version),
-				HistoryRecord::new(
-					&user.map(|u| u.name).unwrap_or("anonymous".to_string()),
-					current,
-					params.content.as_str(),
-				)
-				.as_bytes(),
-			)
-			.unwrap();
-			tx.commit().unwrap();
-		}
+			.enc(),
+		)
+		.unwrap();
+		tx.commit().unwrap();
 
 		// TODO: Sanitize.
-		doc.set_content(params.content);
+		page.set_content(params.content.as_str());
 
 		// TODO: Handle DB error.
-		db.put_cf(db.cf_handle(PAGE_CF).unwrap(), key, doc.as_bytes())
-			.unwrap();
+		Page::put(db, &ns.name, &page).await;
 
-		search.write().unwrap().update_index(&ns.name, &doc);
+		search.write().unwrap().update_index(&ns.name, &page);
 
 		Redirect::to(&format!("/{}/{slug}", &ns.name)).into_response()
 	} else {

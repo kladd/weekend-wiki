@@ -20,18 +20,18 @@ use crate::{
 		namespace::{Namespace, NamespaceKey},
 		user::{User, UserKey},
 	},
-	document::{Document, DocumentKey},
-	encoding::{AsBytes, FromBytes},
+	encoding::{DbDecode, DbEncode},
 	history::db::{HistoryKey, HistoryVersionRecord},
+	page::{Page, PageKey},
 };
 
 mod auth;
 mod control;
 mod create;
-mod document;
 mod edit;
 mod encoding;
 mod history;
+mod page;
 mod search;
 mod view;
 
@@ -56,6 +56,7 @@ pub struct Context {
 
 #[tokio::main]
 async fn main() {
+	println!("Starting with DB: {LOCAL_DB_PATH}");
 	// Database.
 	// let db = rocksdb::DB::open_default(LOCAL_DB_PATH).unwrap();
 	let mut db_opts = rocksdb::Options::default();
@@ -75,7 +76,7 @@ async fn main() {
 	seed_base(&db).await;
 
 	// Search
-	let search_context = RwLock::new(search::SearchContext::new(&db));
+	let search_context = RwLock::new(search::SearchContext::new(&db).await);
 
 	// Whole world.
 	let context = Arc::new(Context {
@@ -103,7 +104,7 @@ async fn main() {
 		.fallback(not_found)
 		.with_state(context);
 
-	let server = tokio::net::TcpListener::bind("127.0.0.1:8080")
+	let server = tokio::net::TcpListener::bind("127.0.0.0:8080")
 		.await
 		.unwrap();
 
@@ -126,11 +127,7 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		.full_iterator_cf(&db.cf_handle(PAGE_CF).unwrap(), IteratorMode::Start);
 	for page in pages {
 		let (k, v) = page.unwrap();
-		println!(
-			"PAGE {:?} => {}",
-			DocumentKey::from_bytes(k),
-			Document::from_bytes(v).title()
-		);
+		println!("PAGE {:?} => {}", PageKey::dec(k), Page::dec(v).title());
 	}
 
 	let history = db
@@ -139,10 +136,7 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		let (k, v) = hist.unwrap();
 		let key = HistoryKey::from_bytes(k);
 		if key.revision().contains("VERSION") {
-			println!(
-				"HIST {key:?} => {:?}",
-				HistoryVersionRecord::from_bytes(v)
-			);
+			println!("HIST {key:?} => {:?}", HistoryVersionRecord::dec(v));
 		} else {
 			println!("HIST {key:?} => [DIFF]");
 		}
@@ -152,22 +146,14 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		.full_iterator_cf(&db.cf_handle(NSPC_CF).unwrap(), IteratorMode::Start);
 	for ns in nss {
 		let (k, v) = ns.unwrap();
-		println!(
-			"NSPC {:?} => {:?}",
-			NamespaceKey::from_bytes(k),
-			Namespace::from_bytes(v)
-		);
+		println!("NSPC {:?} => {:?}", NamespaceKey::dec(k), Namespace::dec(v));
 	}
 
 	let users = db
 		.full_iterator_cf(&db.cf_handle(USER_CF).unwrap(), IteratorMode::Start);
 	for user in users {
 		let (k, v) = user.unwrap();
-		println!(
-			"USER {:?} => {:?}",
-			UserKey::from_bytes(k),
-			User::from_bytes(v)
-		);
+		println!("USER {:?} => {:?}", UserKey::dec(k), User::dec(v));
 	}
 
 	(StatusCode::OK, "OK")
@@ -197,8 +183,7 @@ async fn seed_base(db: &TransactionDB) {
 				&page_db,
 				format!("{}/{}", namespace.to_str().unwrap(), slugify(title))
 					.as_bytes(),
-				Document::new(title.to_string(), 0o644, Some(content.unwrap()))
-					.as_bytes(),
+				Page::new(title, 0o644, Some(content.unwrap())).enc(),
 			)
 			.unwrap();
 		}

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Arc};
+use std::collections::HashSet;
 
 use bincode::{Decode, Encode};
 use rocksdb::{IteratorMode, TransactionDB};
@@ -6,7 +6,7 @@ use rocksdb::{IteratorMode, TransactionDB};
 use crate::{
 	auth,
 	auth::{has_access, user::User},
-	encoding::{AsBytes, FromBytes},
+	encoding::{DbDecode, DbEncode},
 	NSPC_CF,
 };
 
@@ -41,12 +41,12 @@ impl Namespace {
 	pub async fn get(db: &TransactionDB, name: &str) -> Option<Namespace> {
 		let cf = db.cf_handle(NSPC_CF).unwrap();
 		let bytes = db.get_cf(&cf, name).unwrap()?;
-		Some(Namespace::from_bytes(bytes))
+		Some(Namespace::dec(bytes))
 	}
 
 	pub async fn put(db: &TransactionDB, ns: &Self) {
 		let cf = db.cf_handle(NSPC_CF).unwrap();
-		db.put_cf(&cf, &ns.name, ns.as_bytes()).unwrap()
+		db.put_cf(&cf, &ns.name, ns.enc()).unwrap()
 	}
 
 	pub async fn list(db: &TransactionDB) -> Vec<Namespace> {
@@ -54,9 +54,7 @@ impl Namespace {
 		let iter = db.full_iterator_cf(&cf, IteratorMode::Start);
 
 		// TODO: Handle the errors.
-		iter.flatten()
-			.map(|(_, v)| Namespace::from_bytes(v))
-			.collect()
+		iter.flatten().map(|(_, v)| Namespace::dec(v)).collect()
 	}
 
 	pub fn user_has_access(&self, user: &Option<User>, access: u16) -> bool {
@@ -88,8 +86,8 @@ impl Namespace {
 	}
 }
 
-impl FromBytes for NamespaceKey {
-	fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Self {
+impl DbDecode for NamespaceKey {
+	fn dec<B: AsRef<[u8]>>(bytes: B) -> Self {
 		Self(String::from_utf8(bytes.as_ref().to_vec()).unwrap())
 	}
 }

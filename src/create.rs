@@ -13,9 +13,8 @@ use crate::{
 	auth::{
 		add_user_to_namespace, namespace::Namespace, user::User, COOKIE_NAME,
 	},
-	document::Document,
-	encoding::AsBytes,
-	Context, CREATE_HTML, PAGE_CF,
+	page::Page,
+	Context, CREATE_HTML,
 };
 
 #[derive(Deserialize)]
@@ -64,23 +63,13 @@ pub async fn post(
 
 	// TODO: Custom perms.
 	// TODO: Sanitize.
-	let doc = Document::new(params.title, 0o644, None);
-
-	let key = format!("{}/{}", ns.name, doc.slug());
+	let page = Page::new(params.title.as_str(), 0o644, None);
 
 	// TODO: Check for duplicates first?
-	state
-		.db
-		.put_cf(
-			// TODO: Handles in context.
-			state.db.cf_handle(PAGE_CF).unwrap(),
-			key,
-			doc.as_bytes(),
-		)
-		.unwrap();
+	Page::put(&state.db, &ns.name, &page).await;
 
 	// TODO: Update search index.
-	state.search.write().unwrap().update_index(&ns.name, &doc);
+	state.search.write().unwrap().update_index(&ns.name, &page);
 
-	Redirect::to(&format!("/{}/{}", ns.name, doc.slug())).into_response()
+	Redirect::to(&format!("/{}/{}", ns.name, page.slug())).into_response()
 }

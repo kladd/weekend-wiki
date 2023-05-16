@@ -1,4 +1,3 @@
-use rocksdb::IteratorMode;
 use tantivy::{
 	collector::TopDocs,
 	doc,
@@ -8,9 +7,8 @@ use tantivy::{
 };
 
 use crate::{
-	document::{Document, DocumentKey},
-	encoding::FromBytes,
-	PAGE_CF,
+	encoding::DbDecode,
+	page::{Page, PageKey},
 };
 
 pub struct SearchContext {
@@ -31,7 +29,7 @@ pub struct QueryResult {
 impl SearchContext {
 	const INDEX_SIZE_BYTES: usize = 0x300_000; // 3MB is the minimum.
 
-	pub fn new(db: &rocksdb::TransactionDB) -> Self {
+	pub async fn new(db: &rocksdb::TransactionDB) -> Self {
 		let mut schema_builder = Schema::builder();
 		let f_path = schema_builder.add_facet_field("path", STORED);
 		let f_slug = schema_builder.add_text_field("slug", TEXT | STORED);
@@ -42,23 +40,16 @@ impl SearchContext {
 		let mut index_writer = index.writer(Self::INDEX_SIZE_BYTES).unwrap();
 
 		// TODO: Obviously this won't scale forever, but I'm curious.
-		for (key, doc) in db
-			.full_iterator_cf(
-				db.cf_handle(PAGE_CF).unwrap(),
-				IteratorMode::Start,
-			)
-			.map(Result::unwrap)
-		{
-			let DocumentKey(ns, slug) = DocumentKey::from_bytes(key);
-			let doc = Document::from_bytes(doc);
-			let path = Facet::from_text(&format!("/{ns}/{slug}")).unwrap();
+		// TODO: Do not unwrap.
+		for (key, doc) in Page::list_all(db).await.map(Result::unwrap) {
+			let path = PageKey::dec(key).as_facet();
+			let doc = Page::dec(doc);
 			index_writer
 				.add_document(doc!(
 					f_path => path,
-					f_slug => slug.as_str(),
-					f_title => doc.title().as_str(),
-					// TODO: These getters are terrible.
-					f_content => doc.content().unwrap_or(&String::new()).as_str()
+					f_slug => doc.slug(),
+					f_title => doc.title(),
+					f_content => doc.content()
 				))
 				.unwrap();
 		}
@@ -112,7 +103,7 @@ impl SearchContext {
 		results
 	}
 
-	pub fn update_index(&mut self, ns: &str, doc: &Document) {
+	pub fn update_index(&mut self, ns: &str, doc: &Page) {
 		// TODO: This is will remove all docs with this slug, not just the one
 		//       in this namespace.
 		let path = Facet::from_text(&format!("/{ns}/{}", doc.slug())).unwrap();
@@ -123,7 +114,7 @@ impl SearchContext {
 				self.f_path => path,
 				self.f_slug => doc.slug().clone(),
 				self.f_title => doc.title().clone(),
-				self.f_content => doc.content().unwrap_or(&String::new()).as_str()
+				self.f_content => doc.content()
 			))
 			// TODO: Handle error.
 			.unwrap();

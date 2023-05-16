@@ -1,10 +1,10 @@
-use std::{collections::HashSet, sync::Arc};
+use std::collections::HashSet;
 
 use bincode::{Decode, Encode};
 use rocksdb::{IteratorMode, TransactionDB};
 
 use crate::{
-	encoding::{AsBytes, FromBytes},
+	encoding::{DbDecode, DbEncode},
 	USER_CF,
 };
 
@@ -39,12 +39,12 @@ impl User {
 	pub async fn get(db: &TransactionDB, name: &str) -> Option<User> {
 		let cf = db.cf_handle(USER_CF).unwrap();
 		let bytes = db.get_cf(&cf, name).unwrap()?;
-		Some(User::from_bytes(bytes))
+		Some(User::dec(bytes))
 	}
 
 	pub async fn put(db: &TransactionDB, user: &Self) {
 		let cf = db.cf_handle(USER_CF).unwrap();
-		db.put_cf(&cf, &user.name, user.as_bytes()).unwrap()
+		db.put_cf(&cf, &user.name, user.enc()).unwrap()
 	}
 
 	pub async fn list(db: &TransactionDB) -> Vec<User> {
@@ -52,7 +52,7 @@ impl User {
 		let iter = db.full_iterator_cf(&cf, IteratorMode::Start);
 
 		// TODO: Handle the errors.
-		iter.flatten().map(|(_, v)| User::from_bytes(v)).collect()
+		iter.flatten().map(|(_, v)| User::dec(v)).collect()
 	}
 }
 
@@ -61,8 +61,8 @@ pub fn super_strong_password_hashing_algorithm(password: &str) -> String {
 	password.to_string()
 }
 
-impl FromBytes for UserKey {
-	fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Self {
+impl DbDecode for UserKey {
+	fn dec<B: AsRef<[u8]>>(bytes: B) -> Self {
 		Self(String::from_utf8(bytes.as_ref().to_vec()).unwrap())
 	}
 }

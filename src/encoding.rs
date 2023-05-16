@@ -1,27 +1,27 @@
 use crate::BINCODE_CONFIG;
 
-pub trait AsBytes {
-	fn as_bytes(&self) -> Vec<u8>;
+pub trait DbEncode {
+	fn enc(&self) -> Vec<u8>;
 }
 
-pub trait FromBytes {
-	fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Self;
+pub trait DbDecode {
+	fn dec<B: AsRef<[u8]>>(bytes: B) -> Self;
 }
 
-impl<T> AsBytes for T
+impl<T> DbEncode for T
 where
 	T: bincode::Encode,
 {
-	fn as_bytes(&self) -> Vec<u8> {
+	fn enc(&self) -> Vec<u8> {
 		bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap()
 	}
 }
 
-impl<T> FromBytes for T
+impl<T> DbDecode for T
 where
 	T: bincode::Decode,
 {
-	fn from_bytes<B>(bytes: B) -> Self
+	fn dec<B>(bytes: B) -> Self
 	where
 		B: AsRef<[u8]>,
 	{

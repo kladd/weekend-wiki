@@ -1,9 +1,13 @@
 Permissions dictate how [users](/meta/users) can view and edit pages or
 [namespaces](/meta/namespaces).
 
-## User permissions
+## Page permissions
 
-**TODO**: document.
+TODO: Document
+
+## Namespace permissions
+
+TODO: Document
 
 ## Admin roles
 
