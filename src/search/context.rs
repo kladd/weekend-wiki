@@ -1,12 +1,13 @@
 use tantivy::{
-	collector::TopDocs,
+	collector::{FacetCollector, TopDocs},
 	doc,
-	query::QueryParser,
+	query::{BooleanQuery, Occur, QueryClone, QueryParser, TermSetQuery},
 	schema::{Facet, Field, Schema, STORED, TEXT},
 	Index, IndexWriter, Term,
 };
 
 use crate::{
+	auth::namespace::Namespace,
 	encoding::DbDecode,
 	page::{Page, PageKey},
 };
@@ -71,14 +72,26 @@ impl SearchContext {
 	}
 
 	// TODO: Any user can search anything and see it, fix that.
-	pub fn query(&self, query: &str) -> Vec<QueryResult> {
+	pub fn query(
+		&self,
+		query: &str,
+		namespaces: Vec<&str>,
+	) -> Vec<QueryResult> {
 		// TODO: I think reader should be long lived?
 		let searcher = self.index.reader().unwrap().searcher();
 		// TODO: Sanitize.
 		let q = self.query_parser.parse_query(query).unwrap();
+		let nsq = TermSetQuery::new(namespaces.iter().map(|ns| {
+			Term::from_facet(self.f_path, &Facet::from(&format!("/{ns}")))
+		}))
+		.box_clone();
 
-		let search_results =
-			searcher.search(&q, &TopDocs::with_limit(16)).unwrap();
+		let scoped_query =
+			BooleanQuery::new(vec![(Occur::Must, nsq), (Occur::Must, q)]);
+
+		let search_results = searcher
+			.search(&scoped_query, &TopDocs::with_limit(16))
+			.unwrap();
 
 		let mut results = vec![];
 		for (_score, doc_address) in search_results {
