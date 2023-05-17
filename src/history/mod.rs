@@ -5,8 +5,10 @@ use axum::{
 	extract::{Path, State},
 	response::{Html, IntoResponse},
 };
+use axum_extra::{headers, TypedHeader};
 
 use crate::{
+	auth::{user::User, UserView, COOKIE_NAME},
 	encoding::DbDecode,
 	history::{
 		db::{HistoryKey, HistoryRecord},
@@ -25,9 +27,16 @@ pub mod view;
 pub async fn get(
 	// TODO: New type.
 	Path((ns, slug)): Path<(String, String)>,
+	TypedHeader(cookies): TypedHeader<headers::Cookie>,
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
+
+	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
+		User::get(db, username).await
+	} else {
+		None
+	};
 
 	// Check that the document exists.
 	let page = match Page::get(db, &ns, &slug).await {
@@ -65,6 +74,7 @@ pub async fn get(
 			title: page.title(),
 			slug: slug.as_str(),
 			revisions: versions,
+			user: user.map(UserView::new),
 		}
 		.render()
 		.unwrap(),

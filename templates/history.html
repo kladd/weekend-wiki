@@ -16,26 +16,28 @@
 <body>
 <div id="wk-container">
     <header>
-        <p>
-            <a href="/">Home</a>
-        </p>
+        <a href="/">Home</a>
+        {% include "search_bar.html" %}
+        {% include "login_logout_header.html" %}
     </header>
-    <main>
-        <h1>History of &ldquo;<em>{{ title }}</em>&rdquo;</h1>
-        <div id="actions">
-            <p>
-                <a href="../{{ slug }}">Read</a> | <a href="../{{ slug }}/edit">Edit</a>
-            </p>
-        </div>
-        <div id="content">
-            {% for entry in revisions %}
-            <section>
-                <h2>Revision {{ entry.version }}</h2>
-                <div class="diff">{{ entry.delta }}</div>
-            </section>
-            {% endfor %}
-        </div>
-    </main>
+    <div id="main-container">
+        <main>
+            <h1>History of &ldquo;<em>{{ title }}</em>&rdquo;</h1>
+            <div id="actions">
+                <p class="text-quiet">
+                    <a href="../{{ slug }}">Read</a> | <a href="../{{ slug }}/edit">Edit</a>
+                </p>
+            </div>
+            <div id="content">
+                {% for entry in revisions %}
+                <section>
+                    <h2>Revision {{ entry.version }}</h2>
+                    <div class="diff">{{ entry.delta }}</div>
+                </section>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
 </div>
 </body>
 </html>

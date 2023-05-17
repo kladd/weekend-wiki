@@ -23,6 +23,18 @@ const OWNER: u16 = 6;
 const NAMESPACE: u16 = 3;
 const OTHERS: u16 = 0;
 
+pub struct UserView {
+	pub name: String,
+}
+
+impl UserView {
+	pub fn new(user: User) -> Self {
+		Self {
+			name: user.name.clone(),
+		}
+	}
+}
+
 pub fn has_access(mode: u16, kind: u16, request: u16) -> bool {
 	((mode >> kind) & MASK) & request != 0
 }

@@ -9,7 +9,7 @@ use axum_extra::{headers, TypedHeader};
 
 use crate::{
 	auth,
-	auth::{namespace::Namespace, user::User, COOKIE_NAME},
+	auth::{namespace::Namespace, user::User, UserView, COOKIE_NAME},
 	not_found,
 	page::Page,
 	resource_or_return_error, Context,
@@ -21,6 +21,7 @@ pub struct ViewTemplate<'a> {
 	pub(crate) title: &'a str,
 	pub(crate) body: &'a str,
 	pub(crate) slug: &'a str,
+	pub user: Option<UserView>,
 }
 
 pub async fn get(
@@ -51,6 +52,7 @@ pub async fn get(
 				title: doc.title(),
 				body: doc.content(),
 				slug: doc.slug(),
+				user: user.map(UserView::new),
 			}
 			.render()
 			.unwrap(),

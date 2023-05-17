@@ -11,7 +11,7 @@ use serde::Deserialize;
 
 use crate::{
 	auth,
-	auth::{namespace::Namespace, user::User, COOKIE_NAME},
+	auth::{namespace::Namespace, user::User, UserView, COOKIE_NAME},
 	encoding::{DbDecode, DbEncode},
 	history::db::{HistoryRecord, HistoryVersionRecord},
 	not_found,
@@ -24,6 +24,9 @@ use crate::{
 struct EditTemplate {
 	title: String,
 	content: String,
+	namespace: String,
+	slug: String,
+	user: Option<UserView>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -56,6 +59,9 @@ pub async fn get(
 			EditTemplate {
 				title: page.title().to_string(),
 				content: page.content().to_string(),
+				user: user.map(UserView::new),
+				namespace: ns.name,
+				slug: page.slug().to_string(),
 			}
 			.render()
 			.unwrap(),

@@ -1,0 +1,7 @@
+<div id="login-logout">
+    {%- if let Some(user) = user -%}
+    {{ user.name }} (<a href="/logout" class="text-quiet">logout</a>)
+    {%- else -%}
+    <a href="/login"/>Login</a>
+    {%- endif -%}
+</div>

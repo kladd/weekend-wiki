@@ -5,10 +5,7 @@ use std::{
 };
 
 use axum::{
-	extract::State,
-	http::StatusCode,
-	response::{Html, IntoResponse},
-	routing, Router,
+	extract::State, http::StatusCode, response::IntoResponse, routing, Router,
 };
 use rocksdb::{IteratorMode, TransactionDB, TransactionDBOptions};
 use tower_http::services::ServeDir;
@@ -31,6 +28,7 @@ mod edit;
 mod encoding;
 mod errors;
 mod history;
+mod index;
 mod page;
 mod search;
 mod view;
@@ -86,7 +84,7 @@ async fn main() {
 
 	// Web pages.
 	let app = Router::new()
-		.route("/", routing::get(get))
+		.route("/", routing::get(index::get))
 		.route("/search", routing::get(search::get))
 		.route("/create", routing::get(create::get))
 		.route("/create", routing::post(create::post))
@@ -109,10 +107,6 @@ async fn main() {
 		.unwrap();
 
 	axum::serve(server, app).await.unwrap();
-}
-
-async fn get() -> Html<&'static str> {
-	Html(INDEX_HTML)
 }
 
 async fn not_found() -> impl IntoResponse {

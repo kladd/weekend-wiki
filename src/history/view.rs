@@ -1,8 +1,11 @@
 use askama::Template;
 
-use crate::history::{
-	db::{HistoryKey, HistoryRecord},
-	delta::Delta,
+use crate::{
+	auth::UserView,
+	history::{
+		db::{HistoryKey, HistoryRecord},
+		delta::Delta,
+	},
 };
 
 #[derive(Template)]
@@ -11,6 +14,7 @@ pub struct HistoryView<'a> {
 	pub slug: &'a str,
 	pub title: &'a str,
 	pub revisions: Vec<HistoryRevisionView>,
+	pub user: Option<UserView>,
 }
 
 pub struct HistoryRevisionView {

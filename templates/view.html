@@ -9,21 +9,23 @@
 <body>
 <div id="wk-container">
     <header>
-        <p>
-            <a href="/">Home</a>
-        </p>
+        <a href="/">Home</a>
+        {% include "search_bar.html" %}
+        {% include "login_logout_header.html" %}
     </header>
-    <main>
-        <h1 id="title">{{ title }}</h1>
-        <div id="actions">
-            <p>
-                <a href="{{ slug }}/edit">Edit</a> | <a href="{{ slug }}/history">History</a>
-            </p>
-        </div>
-        <div id="content" class="read-content">
-            {{ body|markdown }}
-        </div>
-    </main>
+    <div id="main-container">
+        <main>
+            <h1 id="title">{{ title }}</h1>
+            <div id="actions">
+                <p class="text-quiet">
+                    <a href="{{ slug }}/edit">Edit</a> | <a href="{{ slug }}/history">History</a>
+                </p>
+            </div>
+            <div id="content" class="read-content">
+                {{ body|markdown }}
+            </div>
+        </main>
+    </div>
 </div>
 </body>
 </html>

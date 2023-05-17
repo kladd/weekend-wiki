@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en-US"><!-- 🦅 -->
+<head>
+    <title>Weekend</title>
+    <style>
+        {% include "css/main.css" %}
+        #search-container input {
+            width: 100%;
+        }
+
+        #search-container {
+            align-self: baseline;
+        }
+    </style>
+</head>
+<body>
+<div id="wk-container">
+    <header>
+        <p>Weekend Wiki</p>
+        {% include "login_logout_header.html" %}
+    </header>
+    <div id="main-container">
+        <main>
+            <div id="search-container">
+                <form action="/search" method="get">
+                    <input placeholder="Search" type="text" name="q" id="query" autofocus="autofocus" autocomplete="off"
+                           accesskey="F">
+                </form>
+            </div>
+            <div id="actions">
+                <p class="text-quiet">
+                    <a href="/create">Create page</a>
+                </p>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+</html>

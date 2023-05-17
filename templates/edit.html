@@ -4,71 +4,90 @@
     <title>{{ title }}</title>
     <style>
         {% include "css/main.css" %}
+
         #wk-editor {
+            grid-row-start: 2;
+            grid-column: 1 / -1;
+
             display: grid;
-            grid-column: 1/-1;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto;
+            grid-template-rows: max-content;
             grid-column-gap: 32px;
         }
-        #wk-ed-ta {
-            min-width: 100%;
-            resize: vertical;
-            font-size: 14px;
-            border: 2px solid;
-            border-radius: 3px;
-            padding: 1rem;
-            min-height: 72vh;
+
+        #wk-ed-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
         }
-        #wk-preview {
+
+        #wk-ed-content {
+            width: 100%;
+            resize: vertical;
+            min-height: 26lh;
+            padding: 1rem;
+        }
+
+        #wk-preview-content {
+            width: 100%;
             background-color: white;
             border-radius: 5px;
             padding: 1rem 2rem;
             box-shadow: rgba(0, 0, 0, 0.16) 0 1px 4px;
-
             min-height: 26lh;
-            max-width: 80ch;
         }
-        #wk-preview :first-child {
+
+        #wk-preview-content :first-child {
             margin-top: 0;
+        }
+
+        textarea {
+            outline: none;
+            border-radius: 5px;
+            border: 1px solid var(--primary-text-color);
         }
     </style>
 </head>
 <body>
 <div id="wk-container">
     <header>
-        <p>
-            <a href="/">Home</a>
-        </p>
+        <a href="/">Home</a>
+        {% include "search_bar.html" %}
+        {% include "login_logout_header.html" %}
     </header>
-    <main>
-        <h1 id="title">{{ title }}</h1>
+    <div id="main-container">
+        <main>
+            <h1 id="title">
+                {{ title }}
+            </h1>
+            <div id="wk-editor">
+                <div id="wk-ed">
+                    <div id="wk-ed-header">
+                        <p class="text-quiet">Edit</p>
+                        <p class="text-quiet" style="justify-self: end">
+                            <a href="/{{ namespace }}/{{ slug }}">cancel</a>
+                        </p>
+                    </div>
+                    <form action="" method="post" style="display: block">
+                        <textarea id="wk-ed-content" name="content">{{ content }}</textarea>
+                        <input type="submit" value="Save">
+                    </form>
+                </div>
 
-        <div id="wk-editor">
-            <div id="wk-ed">
-                <p>Edit</p>
-                <form action="" method="post" style="display: block">
-                    <textarea id="wk-ed-ta" name="content">{{ content }}</textarea>
-                    <input type="submit" value="Submit">
-                </form>
-            </div>
-
-            <div>
-                <p>
-                    Preview
-                </p>
                 <div id="wk-preview">
-
+                    <p class="text-quiet">
+                        Preview
+                    </pclas>
+                    <div id="wk-preview-content"></div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 </div>
 <script src="/dist/markdown.js"/></script>
 <script>
     window["markdown"].ready.then(markdown => {
-        let ta = document.getElementById("wk-ed-ta");
-        let pv = document.getElementById("wk-preview");
+        let ta = document.getElementById("wk-ed-content");
+        let pv = document.getElementById("wk-preview-content");
         ta.addEventListener("input", (event) => {
             pv.innerHTML = markdown.parse(event.target.value);
         })
