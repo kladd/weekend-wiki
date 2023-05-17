@@ -14,7 +14,7 @@ use crate::{
 	},
 	not_found,
 	page::Page,
-	Context, HIST_CF, PAGE_CF,
+	Context, HIST_CF,
 };
 
 pub mod db;
@@ -29,14 +29,13 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let key = format!("{ns}/{slug}");
-
 	// Check that the document exists.
-	let doc_maybe = db.get_cf(db.cf_handle(PAGE_CF).unwrap(), &key).unwrap();
-	let page = match doc_maybe {
-		Some(bytes) => Page::dec(bytes),
+	let page = match Page::get(db, &ns, &slug).await {
+		Some(page) => page,
 		_ => return not_found().await.into_response(),
 	};
+
+	let key = format!("{ns}/{slug}");
 
 	let iter = db.prefix_iterator_cf(db.cf_handle(HIST_CF).unwrap(), &key);
 	let mut versions = iter
