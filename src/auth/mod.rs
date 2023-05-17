@@ -19,9 +19,9 @@ pub const WRITE: u16 = 0o2;
 pub const MASK: u16 = 0o7;
 
 // Kinds.
-const OWNER: u16 = 6;
-const NAMESPACE: u16 = 3;
-const OTHERS: u16 = 0;
+pub const OWNER: u16 = 6;
+pub const NAMESPACE: u16 = 3;
+pub const OTHERS: u16 = 0;
 
 pub struct UserView {
 	pub name: String,

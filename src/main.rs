@@ -178,7 +178,7 @@ async fn seed_base(db: &TransactionDB) {
 			Page::put(
 				db,
 				namespace.to_str().unwrap(),
-				&Page::new(title, 0o644, Some(content.unwrap())),
+				&Page::new(title, 0o644, Some("meta"), Some(content.unwrap())),
 			)
 			.await
 		}

@@ -34,7 +34,7 @@ pub async fn post(
 	Form(params): Form<CreatePayload>,
 ) -> impl IntoResponse {
 	// TODO: Rejection and all.
-	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
+	let mut user = if let Some(username) = cookies.get(COOKIE_NAME) {
 		User::get(&state.db, username).await
 	} else {
 		None
@@ -51,16 +51,15 @@ pub async fn post(
 				return Redirect::to("/create?error=EPERM").into_response();
 			}
 			ns
-		} else if let Some(user) = user {
+		} else if let Some(ref mut user) = user {
 			// TODO: Any user can create a namespace, but I could see an admin
 			//       not wanting that.
 			// TODO: Also one must be a user to create a namespace, this too may
 			//       not be desirable.
-			let mut user = user;
 			let mut new_ns =
 				Namespace::new(&params.namespace, &user.name, 0o755);
 			if let Err(e) =
-				add_user_to_namespace(&state.db, &mut user, &mut new_ns).await
+				add_user_to_namespace(&state.db, user, &mut new_ns).await
 			{
 				return e.into_response();
 			}
@@ -72,9 +71,14 @@ pub async fn post(
 
 	// TODO: Custom perms.
 	// TODO: Sanitize.
-	let page = Page::new(params.title.as_str(), 0o644, None);
+	let page = Page::new(
+		params.title.as_str(),
+		Page::DEFAULT_MODE - ns.umask,
+		user.as_ref().map(User::name),
+		None,
+	);
 
-	// TODO: Check for duplicates first?
+	// TODO: Check for duplicates first.
 	Page::put(&state.db, &ns.name, &page).await;
 
 	// TODO: Update search index.

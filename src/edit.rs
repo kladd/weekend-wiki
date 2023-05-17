@@ -42,19 +42,22 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
-
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
 		User::get(db, username).await
 	} else {
 		None
 	};
 
+	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
 	if !ns.user_has_access(&user, auth::READ) {
 		return not_found().await.into_response();
 	}
 
 	if let Some(page) = Page::get(db, &ns.name, &slug).await {
+		if !page.user_has_access(&user, &ns.name, auth::READ) {
+			return not_found().await.into_response();
+		}
+
 		Html(
 			EditTemplate {
 				title: page.title().to_string(),
@@ -90,12 +93,19 @@ pub async fn post(
 		None
 	};
 
-	if !ns.user_has_access(&user, auth::WRITE) {
-		return Redirect::to(&format!("/{}/{slug}/edit?error=EPERM", &ns.name))
-			.into_response();
+	if !ns.user_has_access(&user, auth::READ) {
+		return not_found().await.into_response();
 	}
 
 	if let Some(mut page) = Page::get(db, &ns.name, &slug).await {
+		if !page.user_has_access(&user, &ns.name, auth::WRITE) {
+			return Redirect::to(&format!(
+				"/{}/{slug}/edit?error=EPERM",
+				&ns.name
+			))
+			.into_response();
+		}
+
 		// TODO: Move this.
 		let tx = db.transaction();
 		let version_key = HistoryVersionRecord::key(&ns.name, &slug);

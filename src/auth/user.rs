@@ -36,6 +36,10 @@ impl User {
 		}
 	}
 
+	pub fn name(&self) -> &str {
+		&self.name
+	}
+
 	pub async fn get(db: &TransactionDB, name: &str) -> Option<User> {
 		let cf = db.cf_handle(USER_CF).unwrap();
 		let bytes = db.get_cf(&cf, name).unwrap()?;

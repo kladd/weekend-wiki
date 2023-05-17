@@ -31,27 +31,28 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
-
 	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
 		User::get(db, username).await
 	} else {
 		None
 	};
 
+	let ns = resource_or_return_error!(Namespace::get(db, &ns).await);
 	if !ns.user_has_access(&user, auth::READ) {
 		return not_found().await.into_response();
 	}
 
 	// TODO: Sanitize.
-	let content = Page::get(db, &ns.name, &slug).await;
+	if let Some(page) = Page::get(db, &ns.name, &slug).await {
+		if !page.user_has_access(&user, &ns.name, auth::READ) {
+			return not_found().await.into_response();
+		}
 
-	if let Some(doc) = content {
 		Html(
 			ViewTemplate {
-				title: doc.title(),
-				body: doc.content(),
-				slug: doc.slug(),
+				title: page.title(),
+				body: page.content(),
+				slug: page.slug(),
 				user: user.map(UserView::new),
 			}
 			.render()

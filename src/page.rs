@@ -4,6 +4,8 @@ use slug::slugify;
 use tantivy::schema::Facet;
 
 use crate::{
+	auth,
+	auth::{has_access, user::User},
 	encoding::{DbDecode, DbEncode},
 	PAGE_CF,
 };
@@ -18,14 +20,23 @@ pub struct Page {
 	slug: String,
 	mode: u16,
 	content: String,
+	owner: Option<String>,
 }
 
 impl Page {
+	pub const DEFAULT_MODE: u16 = 0o666;
+
 	// TODO: Better signature.
-	pub fn new(title: &str, mode: u16, content: Option<String>) -> Self {
+	pub fn new(
+		title: &str,
+		mode: u16,
+		owner: Option<&str>,
+		content: Option<String>,
+	) -> Self {
 		Self {
 			mode,
 			title: title.to_string(),
+			owner: owner.map(str::to_string),
 			// TODO: I don't really like that this doesn't retain
 			//       capitalization. Write a slugger like Wikipedia, e.g.
 			//       https://en.wikipedia.org/wiki/Clean_URL
@@ -80,6 +91,32 @@ impl Page {
 			&db.cf_handle(PAGE_CF).unwrap(),
 			IteratorMode::Start,
 		)
+	}
+
+	pub fn user_has_access(
+		&self,
+		user: &Option<User>,
+		namespace: &str,
+		access: u16,
+	) -> bool {
+		// TODO: Duplicated logic with Namespace.
+		let owner_group = if let Some(user) = user {
+			if user.name == User::META {
+				true
+			} else {
+				// TODO: Right now the owner always has full control. Is that
+				//       what we want?
+				let owner =
+					// Users never have owner permissions if the page has no owner?
+					self.owner.as_ref().filter(|owner| **owner == user.name).is_some();
+				let group = user.namespaces.contains(namespace)
+					&& has_access(self.mode, auth::NAMESPACE, access);
+				owner || group
+			}
+		} else {
+			false
+		};
+		owner_group || has_access(self.mode, auth::OTHERS, access)
 	}
 }
 
