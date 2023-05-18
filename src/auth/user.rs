@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
 use bincode::{Decode, Encode};
+use password_hash::{rand_core::OsRng, PasswordHash, SaltString};
+use pbkdf2::Pbkdf2;
 use rocksdb::{IteratorMode, TransactionDB};
 
 use crate::{
@@ -29,9 +31,12 @@ impl User {
 		namespaces.insert("meta".to_string());
 		namespaces.insert(username.to_string());
 
+		let salt = SaltString::generate(&mut OsRng);
+		let hash = PasswordHash::generate(Pbkdf2, password, &salt).unwrap();
+
 		Self {
 			name: username.to_string(),
-			password_hash: super_strong_password_hashing_algorithm(password),
+			password_hash: hash.to_string(),
 			namespaces,
 		}
 	}
@@ -58,11 +63,6 @@ impl User {
 		// TODO: Handle the errors.
 		iter.flatten().map(|(_, v)| User::dec(v)).collect()
 	}
-}
-
-// TODO: Obvious.
-pub fn super_strong_password_hashing_algorithm(password: &str) -> String {
-	password.to_string()
 }
 
 impl DbDecode for UserKey {

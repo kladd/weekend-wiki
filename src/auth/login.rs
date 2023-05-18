@@ -6,13 +6,12 @@ use axum::{
 	response::{Html, IntoResponse, Redirect},
 	Form,
 };
+use password_hash::{PasswordHash, PasswordVerifier};
+use pbkdf2::Pbkdf2;
 use serde::Deserialize;
 
 use crate::{
-	auth::{
-		user::{super_strong_password_hashing_algorithm, User},
-		COOKIE_NAME,
-	},
+	auth::{user::User, COOKIE_NAME},
 	Context, LOGIN_HTML,
 };
 
@@ -30,8 +29,12 @@ pub async fn post(
 	let user = User::get(&state.db, &params.username)
 		.await
 		.filter(|found| {
-			found.password_hash
-				== super_strong_password_hashing_algorithm(&params.password)
+			Pbkdf2
+				.verify_password(
+					params.password.as_bytes(),
+					&PasswordHash::new(&found.password_hash).unwrap(),
+				)
+				.is_ok()
 		});
 
 	if let Some(user) = user {
