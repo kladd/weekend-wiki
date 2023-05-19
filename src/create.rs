@@ -10,9 +10,8 @@ use serde::Deserialize;
 
 use crate::{
 	auth,
-	auth::{
-		add_user_to_namespace, namespace::Namespace, user::User, COOKIE_NAME,
-	},
+	auth::{add_user_to_namespace, namespace::Namespace, user::User},
+	ok,
 	page::Page,
 	Context, CREATE_HTML,
 };
@@ -33,19 +32,10 @@ pub async fn post(
 	TypedHeader(cookies): TypedHeader<headers::Cookie>,
 	Form(params): Form<CreatePayload>,
 ) -> impl IntoResponse {
-	// TODO: Rejection and all.
-	let mut user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(&state.db, username).await
-	} else {
-		None
-	};
+	let mut user = ok!(User::authenticated(&state.db, cookies).await);
 
 	let ns = {
-		let ns_maybe = match Namespace::get(&state.db, &params.namespace).await
-		{
-			Ok(ns) => ns,
-			Err(e) => return e.into_response(),
-		};
+		let ns_maybe = ok!(Namespace::get(&state.db, &params.namespace).await);
 		if let Some(ns) = ns_maybe {
 			if !ns.user_has_access(&user, auth::WRITE) {
 				return Redirect::to("/create?error=EPERM").into_response();
@@ -58,11 +48,7 @@ pub async fn post(
 			//       not be desirable.
 			let mut new_ns =
 				Namespace::new(&params.namespace, &user.name, 0o755);
-			if let Err(e) =
-				add_user_to_namespace(&state.db, user, &mut new_ns).await
-			{
-				return e.into_response();
-			}
+			ok!(add_user_to_namespace(&state.db, user, &mut new_ns).await);
 			new_ns
 		} else {
 			return Redirect::to("/login").into_response();

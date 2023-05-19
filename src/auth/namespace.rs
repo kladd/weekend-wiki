@@ -11,7 +11,7 @@ use crate::{
 	NSPC_CF,
 };
 
-#[derive(Debug)]
+#[derive(Encode, Decode, Debug)]
 pub struct NamespaceKey(String);
 
 // Part Unix group, part Unix directory.
@@ -86,11 +86,5 @@ impl Namespace {
 			.into_iter()
 			.filter(|ns| ns.user_has_access(&user, access))
 			.collect()
-	}
-}
-
-impl DbDecode for NamespaceKey {
-	fn dec<B: AsRef<[u8]>>(bytes: B) -> Self {
-		Self(String::from_utf8(bytes.as_ref().to_vec()).unwrap())
 	}
 }

@@ -1,16 +1,19 @@
 use std::collections::HashSet;
 
+use axum_extra::headers;
 use bincode::{Decode, Encode};
 use password_hash::{rand_core::OsRng, PasswordHash, SaltString};
 use pbkdf2::Pbkdf2;
 use rocksdb::{IteratorMode, TransactionDB};
 
 use crate::{
+	auth::{token::Token, COOKIE_NAME},
 	encoding::{DbDecode, DbEncode},
+	errors::WkError,
 	USER_CF,
 };
 
-#[derive(Debug)]
+#[derive(Encode, Decode, Debug)]
 pub struct UserKey(String);
 
 #[derive(Encode, Decode, Debug)]
@@ -19,6 +22,10 @@ pub struct User {
 	pub name: String,
 	pub password_hash: String,
 	pub namespaces: HashSet<String>,
+}
+
+pub struct UserView {
+	pub name: String,
 }
 
 impl User {
@@ -51,6 +58,18 @@ impl User {
 		Some(User::dec(bytes))
 	}
 
+	pub async fn authenticated(
+		db: &TransactionDB,
+		cookie: headers::Cookie,
+	) -> Result<Option<Self>, WkError> {
+		let token = cookie.get(COOKIE_NAME).and_then(Token::verified);
+		let user = match token {
+			Some(Token { username, .. }) => User::get(db, &username).await,
+			None => None,
+		};
+		Ok(user)
+	}
+
 	pub async fn put(db: &TransactionDB, user: &Self) {
 		let cf = db.cf_handle(USER_CF).unwrap();
 		db.put_cf(&cf, &user.name, user.enc()).unwrap()
@@ -65,8 +84,8 @@ impl User {
 	}
 }
 
-impl DbDecode for UserKey {
-	fn dec<B: AsRef<[u8]>>(bytes: B) -> Self {
-		Self(String::from_utf8(bytes.as_ref().to_vec()).unwrap())
+impl UserView {
+	pub fn new(user: User) -> Self {
+		Self { name: user.name }
 	}
 }

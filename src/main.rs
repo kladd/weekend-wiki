@@ -102,9 +102,7 @@ async fn main() {
 		.fallback(not_found)
 		.with_state(context);
 
-	let server = tokio::net::TcpListener::bind("127.0.0.1:8080")
-		.await
-		.unwrap();
+	let server = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
 
 	axum::serve(server, app).await.unwrap();
 }

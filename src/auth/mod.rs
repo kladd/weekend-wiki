@@ -8,6 +8,7 @@ use crate::{
 pub mod login;
 pub mod logout;
 pub mod namespace;
+pub mod token;
 pub mod user;
 
 pub const COOKIE_NAME: &str = "SESSION";
@@ -22,18 +23,6 @@ pub const MASK: u16 = 0o7;
 pub const OWNER: u16 = 6;
 pub const NAMESPACE: u16 = 3;
 pub const OTHERS: u16 = 0;
-
-pub struct UserView {
-	pub name: String,
-}
-
-impl UserView {
-	pub fn new(user: User) -> Self {
-		Self {
-			name: user.name.clone(),
-		}
-	}
-}
 
 pub fn has_access(mode: u16, kind: u16, request: u16) -> bool {
 	((mode >> kind) & MASK) & request != 0

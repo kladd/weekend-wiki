@@ -1,7 +1,7 @@
 use askama::Template;
 
 use crate::{
-	auth::UserView,
+	auth::user::UserView,
 	history::{
 		db::{HistoryKey, HistoryRecord},
 		delta::Delta,

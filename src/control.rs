@@ -12,7 +12,7 @@ use crate::{
 	auth::{
 		add_user_to_namespace, namespace::Namespace, user::User, COOKIE_NAME,
 	},
-	resource_or_return_error, Context, CONTROL_HTML,
+	exists, ok, Context, CONTROL_HTML,
 };
 
 #[derive(Deserialize)]
@@ -42,10 +42,13 @@ pub async fn post(
 	TypedHeader(cookies): TypedHeader<headers::Cookie>,
 	Form(params): Form<ControlParams>,
 ) -> impl IntoResponse {
-	if let Some(_username) = cookies.get(COOKIE_NAME).filter(|username| {
-		// TODO: Also, extremely secure.
-		*username == User::META
-	}) {
+	if ok!(User::authenticated(&state.db, cookies).await)
+		.filter(|user| {
+			// TODO: Also, extremely secure.
+			user.name == User::META
+		})
+		.is_some()
+	{
 		match params {
 			ControlParams::CreateUser { username, password } => {
 				// TODO: Check exists
@@ -53,42 +56,30 @@ pub async fn post(
 				// TODO: Check exists
 				let mut ns = Namespace::new(&username, &username, 0o700);
 				// TODO: Meta.
-				if let Err(e) =
-					add_user_to_namespace(&state.db, &mut user, &mut ns).await
-				{
-					e.into_response()
-				} else {
-					println!("added {user:?} to {ns:?}");
-					Redirect::to("/control?success=YES").into_response()
-				}
+				ok!(add_user_to_namespace(&state.db, &mut user, &mut ns).await);
+				println!("added {user:?} to {ns:?}");
+				Redirect::to("/control?success=YES").into_response()
 			}
 			ControlParams::AddUserToNamespace {
 				username,
 				namespace,
 			} => {
 				let user = User::get(&state.db, &username).await;
-				let ns = resource_or_return_error!(
-					Namespace::get(&state.db, &namespace).await
-				);
+				let ns =
+					exists!(ok!(Namespace::get(&state.db, &namespace).await));
 
 				if let (Some(mut user), mut ns) = (user, ns) {
-					if let Err(e) =
-						add_user_to_namespace(&state.db, &mut user, &mut ns)
-							.await
-					{
-						e.into_response()
-					} else {
-						println!("added {user:?} to {ns:?}");
-						Redirect::to("/control?success=YES").into_response()
-					}
+					ok!(add_user_to_namespace(&state.db, &mut user, &mut ns)
+						.await);
+					println!("added {user:?} to {ns:?}");
+					Redirect::to("/control?success=YES").into_response()
 				} else {
 					Redirect::to("/control?error=ENOENT").into_response()
 				}
 			}
 			ControlParams::SetNamespaceMode { namespace, mode } => {
-				let mut ns = resource_or_return_error!(
-					Namespace::get(&state.db, &namespace).await
-				);
+				let mut ns =
+					exists!(ok!(Namespace::get(&state.db, &namespace).await));
 				// TODO: validate input obviously
 				ns.mode = u16::from_str_radix(&mode, 8).unwrap();
 				if let Err(e) = Namespace::put(&state.db, &ns).await {

@@ -1,5 +1,5 @@
 use tantivy::{
-	collector::{FacetCollector, TopDocs},
+	collector::TopDocs,
 	doc,
 	query::{BooleanQuery, Occur, QueryClone, QueryParser, TermSetQuery},
 	schema::{Facet, Field, Schema, STORED, TEXT},
@@ -7,7 +7,6 @@ use tantivy::{
 };
 
 use crate::{
-	auth::namespace::Namespace,
 	encoding::DbDecode,
 	page::{Page, PageKey},
 };

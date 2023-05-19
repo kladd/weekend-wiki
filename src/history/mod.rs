@@ -8,13 +8,14 @@ use axum::{
 use axum_extra::{headers, TypedHeader};
 
 use crate::{
-	auth::{user::User, UserView, COOKIE_NAME},
+	auth::user::{User, UserView},
 	encoding::DbDecode,
+	exists,
 	history::{
 		db::{HistoryKey, HistoryRecord},
 		view::{HistoryRevisionView, HistoryView},
 	},
-	not_found,
+	ok,
 	page::Page,
 	Context, HIST_CF,
 };
@@ -32,18 +33,8 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
 
-	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(db, username).await
-	} else {
-		None
-	};
-
-	// Check that the document exists.
-	let page = match Page::get(db, &ns, &slug).await {
-		Some(page) => page,
-		_ => return not_found().await.into_response(),
-	};
-
+	let user = ok!(User::authenticated(db, cookies).await);
+	let page = exists!(Page::get(db, &ns, &slug).await);
 	let key = format!("{ns}/{slug}");
 
 	let iter = db.prefix_iterator_cf(db.cf_handle(HIST_CF).unwrap(), &key);

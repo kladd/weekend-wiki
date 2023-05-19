@@ -13,8 +13,8 @@ use serde::Deserialize;
 
 use crate::{
 	auth,
-	auth::{namespace::Namespace, user::User, COOKIE_NAME},
-	Context,
+	auth::{namespace::Namespace, user::User},
+	ok, Context,
 };
 
 #[derive(Debug, Deserialize)]
@@ -38,11 +38,7 @@ pub async fn get(
 ) -> impl IntoResponse {
 	let Context { search, db, .. } = ctx.as_ref();
 
-	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(db, username).await
-	} else {
-		None
-	};
+	let user = ok!(User::authenticated(db, cookies).await);
 
 	let namespaces = Namespace::list_with_access(db, user, auth::READ).await;
 	let ns_names = namespaces
@@ -61,4 +57,5 @@ pub async fn get(
 		.render()
 		.unwrap(),
 	)
+	.into_response()
 }

@@ -8,8 +8,8 @@ use axum::{
 use axum_extra::{headers, TypedHeader};
 
 use crate::{
-	auth::{user::User, UserView, COOKIE_NAME},
-	Context,
+	auth::user::{User, UserView},
+	ok, Context,
 };
 
 #[derive(Template)]
@@ -23,11 +23,7 @@ pub async fn get(
 	State(ctx): State<Arc<Context>>,
 ) -> impl IntoResponse {
 	let Context { db, .. } = ctx.as_ref();
-	let user = if let Some(username) = cookies.get(COOKIE_NAME) {
-		User::get(db, username).await
-	} else {
-		None
-	};
+	let user = ok!(User::authenticated(db, cookies).await);
 
 	Html(
 		IndexView {

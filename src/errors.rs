@@ -35,13 +35,24 @@ impl From<rocksdb::Error> for WkError {
 	}
 }
 
+/// Unwraps a `Result<T>` or returns an HTTP error response.
 #[macro_export]
-macro_rules! resource_or_return_error {
+macro_rules! ok {
 	($e:expr) => {
 		match $e {
-			Ok(Some(resource)) => resource,
-			Ok(_) => return crate::not_found().await.into_response(),
+			Ok(v) => v,
 			Err(e) => return e.into_response(),
+		}
+	};
+}
+
+/// Unwraps an `Option<T>` or returns an HTTP not found response.
+#[macro_export]
+macro_rules! exists {
+	($e:expr) => {
+		match $e {
+			Some(resource) => resource,
+			None => return $crate::not_found().await.into_response(),
 		}
 	};
 }

@@ -11,7 +11,7 @@ use pbkdf2::Pbkdf2;
 use serde::Deserialize;
 
 use crate::{
-	auth::{user::User, COOKIE_NAME},
+	auth::{token::Token, user::User, COOKIE_NAME},
 	Context, LOGIN_HTML,
 };
 
@@ -38,11 +38,15 @@ pub async fn post(
 		});
 
 	if let Some(user) = user {
-		// TODO: All very, very secure.
-		let cookie =
-			format!("{}={}; SameSite=Lax; Path=/", COOKIE_NAME, user.name);
+		// TODO: CSRF mitigation.
+		let token = Token::new(user.name());
 
-		// Set cookie
+		let cookie = format!(
+			"{}={}; SameSite=Lax; Path=/; HttpOnly",
+			COOKIE_NAME,
+			token.signed()
+		);
+
 		let mut headers = HeaderMap::new();
 		headers.insert(SET_COOKIE, cookie.parse().unwrap());
 
