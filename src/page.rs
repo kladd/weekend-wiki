@@ -14,11 +14,11 @@ use crate::{
 #[derive(Encode, Decode, Debug)]
 pub struct PageKey(String);
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct Page {
 	title: String,
 	slug: String,
-	mode: u16,
+	pub mode: u16,
 	content: String,
 	owner: Option<String>,
 }

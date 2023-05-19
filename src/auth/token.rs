@@ -9,7 +9,7 @@ use crate::encoding::{DbDecode, DbEncode};
 
 const KEY: &[u8] = b"TODO: Secret key";
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct Token {
 	pub username: String,
 	t: u64,

@@ -5,31 +5,51 @@
         body {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
+            grid-column-gap: 4rem;
+            grid-row-gap: 4lh;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: 1fr;
         }
     </style>
 </head>
 <body>
-    <form action="" method="post" style="display: block">
-        <label for="newuser">Username:</label>
-        <input type="text" id="newuser" name="username" placeholder="username" autocomplete="hidden"/>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" placeholder="password" autocomplete="hidden"/>
-        <input type="submit" value="Create User">
-    </form>
-    <form action="" method="post" style="display: block">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" placeholder="username" autocomplete="hidden"/>
-        <label for="namespace">Namespace:</label>
-        <input type="text" id="namespace" name="namespace" placeholder="namespace" autocomplete="hidden"/>
-        <input type="submit" value="Add User">
-    </form>
-    <form action="" method="post" style="display: block">
-        <label for="namespace">Namespace:</label>
-        <input type="text" id="ns" name="namespace" placeholder="namespace" autocomplete="hidden"/>
-        <label for="namespace">Mode:</label>
-        <input type="number" id="mode" name="mode" placeholder="777" autocomplete="hidden"/>
-        <input type="submit" value="Set Mode">
-    </form>
+<form action="" method="post">
+    <p>Create user</p>
+    <label for="newuser">Username:</label>
+    <input type="text" id="newuser" name="username" placeholder="username" autocomplete="hidden"/>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" placeholder="password" autocomplete="hidden"/>
+    <input type="submit" value="Create User">
+</form>
+<form action="" method="post">
+    <p>Add user to namespace</p>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" placeholder="username" autocomplete="hidden"/>
+    <label for="namespace">Namespace:</label>
+    <input type="text" id="namespace" name="namespace" placeholder="namespace" autocomplete="hidden"/>
+    <input type="submit" value="Add User">
+</form>
+<form action="" method="post">
+    <p>Set namespace mode</p>
+    <label for="namespace">Namespace:</label>
+    <input type="text" id="ns" name="namespace" placeholder="namespace" autocomplete="hidden"/>
+    <label for="namespace">Mode:</label>
+    <input type="number" id="mode" name="mode" placeholder="777" autocomplete="hidden"/>
+    <input type="submit" value="Set Mode">
+</form>
+<form action="" method="post">
+    <p>Set page mode</p>
+    <label for="pm-ns">Namespace:</label>
+    <input type="text" id="pm-ns" name="namespace" placeholder="namespace" autocomplete="hidden"/>
+    <label for="pm-pg">Page:</label>
+    <input type="text" id="pm-pg" name="slug" placeholder="slug" autocomplete="hidden"/>
+    <label for="pm-mode">Mode:</label>
+    <input type="number" id="pm-mode" name="mode" placeholder="777" autocomplete="hidden"/>
+    <input type="submit" value="Set Mode">
+</form>
 </body>
 
 </html>

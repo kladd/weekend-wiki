@@ -9,27 +9,42 @@ use axum_extra::{headers, TypedHeader};
 use serde::Deserialize;
 
 use crate::{
-	auth::{
-		add_user_to_namespace, namespace::Namespace, user::User, COOKIE_NAME,
-	},
-	exists, ok, Context, CONTROL_HTML,
+	auth::{add_user_to_namespace, namespace::Namespace, user::User},
+	exists, ok,
+	page::Page,
+	Context, CONTROL_HTML,
 };
 
 #[derive(Deserialize)]
 #[serde(untagged)]
 pub enum ControlParams {
-	CreateUser { username: String, password: String },
-	AddUserToNamespace { username: String, namespace: String },
-	SetNamespaceMode { namespace: String, mode: String },
+	CreateUser {
+		username: String,
+		password: String,
+	},
+	AddUserToNamespace {
+		username: String,
+		namespace: String,
+	},
+	SetPageMode {
+		namespace: String,
+		slug: String,
+		mode: String,
+	},
+	SetNamespaceMode {
+		namespace: String,
+		mode: String,
+	},
 }
 
 pub async fn get(
+	State(state): State<Arc<Context>>,
 	TypedHeader(cookies): TypedHeader<headers::Cookie>,
 ) -> impl IntoResponse {
-	if let Some(_username) = cookies.get(COOKIE_NAME).filter(|username| {
-		// TODO: Also, extremely secure.
-		*username == User::META
-	}) {
+	if ok!(User::authenticated(&state.db, cookies).await)
+		.filter(|user| user.name == User::META)
+		.is_some()
+	{
 		Html(CONTROL_HTML).into_response()
 	} else {
 		Redirect::to("/?error=EPERM").into_response()
@@ -43,10 +58,7 @@ pub async fn post(
 	Form(params): Form<ControlParams>,
 ) -> impl IntoResponse {
 	if ok!(User::authenticated(&state.db, cookies).await)
-		.filter(|user| {
-			// TODO: Also, extremely secure.
-			user.name == User::META
-		})
+		.filter(|user| user.name == User::META)
 		.is_some()
 	{
 		match params {
@@ -86,6 +98,19 @@ pub async fn post(
 					return e.into_response();
 				}
 				dbg!(ns);
+				Redirect::to("/control?success=YES").into_response()
+			}
+			ControlParams::SetPageMode {
+				namespace,
+				slug,
+				mode,
+			} => {
+				let mut page =
+					exists!(Page::get(&state.db, &namespace, &slug).await);
+				page.mode = u16::from_str_radix(&mode, 8).unwrap();
+				Page::put(&state.db, &namespace, &page).await;
+				dbg!(page);
+
 				Redirect::to("/control?success=YES").into_response()
 			}
 		}
