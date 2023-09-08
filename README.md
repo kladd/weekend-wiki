@@ -24,4 +24,5 @@ Wiki documentation is in the wiki's [meta/ namespace](https://github.com/kladd/w
 - axum: web framework
 - rocksdb: persistence
 - tantivy: search/indexing
-- askama: markdown
+- askama: templates
+- comrak: markdown
