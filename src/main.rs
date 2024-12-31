@@ -56,7 +56,6 @@ pub struct Context {
 async fn main() {
 	println!("Starting with DB: {LOCAL_DB_PATH}");
 	// Database.
-	// let db = rocksdb::DB::open_default(LOCAL_DB_PATH).unwrap();
 	let mut db_opts = rocksdb::Options::default();
 	db_opts.create_if_missing(true);
 	db_opts.create_missing_column_families(true);

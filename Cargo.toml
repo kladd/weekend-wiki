@@ -12,25 +12,22 @@ patch = "0.7.0"
 slug = "0.1.4"
 tantivy = "0.19.2"
 thiserror = "1.0.40"
-tower = "0.4.13"
-tower-http = { version = "0.4.0", features = ["fs"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs"] }
 unified-diff = "0.2.1"
 sha2 = "0.10.6"
 hmac = "0.12.1"
 base58 = "0.2.0"
 
 [dependencies.axum]
-git = "https://github.com/tokio-rs/axum"
-rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
+version = "0.7"
 features = ["form"]
 
 [dependencies.axum-macros]
-git = "https://github.com/tokio-rs/axum"
-rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
+version = "0.4"
 
 [dependencies.axum-extra]
-git = "https://github.com/tokio-rs/axum"
-rev = "b0eb7a24bc62c76d59d2a98117c27a4bdb11a34a"
+version = "0.9"
 features = ["typed-header"]
 
 [dependencies.askama]
@@ -38,7 +35,7 @@ version = "0.12"
 features = ["markdown"]
 
 [dependencies.comrak]
-version = "0.18.0"
+version = "0.32"
 default-features = false
 features = []
 
@@ -47,17 +44,17 @@ git = "https://github.com/bincode-org/bincode"
 tag = "v2.0.0-rc.3"
 
 [dependencies.tokio]
-version = "1.28"
+version = "1"
 features = ["macros", "rt-multi-thread"]
 
 [dependencies.serde]
-version = "1.0"
+version = "1"
 features = ["derive"]
 
 # TODO: Use system lib.
 [dependencies.rocksdb]
-version = "0.21.0"
+version = "0.23.0"
 features = ["serde"]
 
 [build-dependencies]
-quote = "1.0.26"
+quote = "1"
