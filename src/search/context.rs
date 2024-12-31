@@ -2,8 +2,8 @@ use tantivy::{
 	collector::TopDocs,
 	doc,
 	query::{BooleanQuery, Occur, QueryClone, QueryParser, TermSetQuery},
-	schema::{Facet, Field, Schema, STORED, TEXT},
-	Index, IndexWriter, Term,
+	schema::{document::Value, Facet, Field, Schema, STORED, TEXT},
+	Index, IndexWriter, TantivyDocument, Term,
 };
 
 use crate::{
@@ -28,7 +28,7 @@ pub struct QueryResult {
 }
 
 impl SearchContext {
-	const INDEX_SIZE_BYTES: usize = 0x300_000; // 3MB is the minimum.
+	const INDEX_SIZE_BYTES: usize = 0xF00_000; // 15MB is the minimum.
 
 	pub async fn new(db: &rocksdb::TransactionDB) -> Self {
 		let mut schema_builder = Schema::builder();
@@ -94,7 +94,7 @@ impl SearchContext {
 
 		let mut results = vec![];
 		for (_score, doc_address) in search_results {
-			let doc = searcher.doc(doc_address).unwrap();
+			let doc = searcher.doc::<TantivyDocument>(doc_address).unwrap();
 			let path = doc
 				.get_first(self.f_path)
 				.unwrap()
@@ -110,7 +110,7 @@ impl SearchContext {
 				title: doc
 					.get_first(self.f_title)
 					.unwrap()
-					.as_text()
+					.as_str()
 					.unwrap()
 					.to_string(),
 			})
