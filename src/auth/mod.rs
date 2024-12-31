@@ -14,12 +14,14 @@ pub mod user;
 pub const COOKIE_NAME: &str = "SESSION";
 
 // Requests / Modes.
+#[allow(dead_code)]
 pub const MANAGE: u16 = 0o1;
 pub const READ: u16 = 0o4;
 pub const WRITE: u16 = 0o2;
 pub const MASK: u16 = 0o7;
 
 // Kinds.
+#[allow(dead_code)]
 pub const OWNER: u16 = 6;
 pub const NAMESPACE: u16 = 3;
 pub const OTHERS: u16 = 0;

@@ -26,6 +26,7 @@ pub struct Namespace {
 }
 
 impl Namespace {
+	#[allow(dead_code)]
 	pub const DEFAULT_MODE: u16 = 0o777;
 	pub const DEFAULT_UMASK: u16 = 0o022;
 

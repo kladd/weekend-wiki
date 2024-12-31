@@ -23,6 +23,7 @@ pub struct Page {
 	owner: Option<String>,
 }
 
+#[allow(dead_code)]
 impl Page {
 	pub const DEFAULT_MODE: u16 = 0o666;
 

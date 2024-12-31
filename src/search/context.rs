@@ -128,8 +128,8 @@ impl SearchContext {
 		self.index_writer
 			.add_document(doc!(
 				self.f_path => path,
-				self.f_slug => doc.slug().clone(),
-				self.f_title => doc.title().clone(),
+				self.f_slug => doc.slug(),
+				self.f_title => doc.title(),
 				self.f_content => doc.content()
 			))
 			// TODO: Handle error.

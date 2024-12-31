@@ -75,6 +75,7 @@ impl User {
 		db.put_cf(&cf, &user.name, user.enc()).unwrap()
 	}
 
+	#[allow(dead_code)]
 	pub async fn list(db: &TransactionDB) -> Vec<User> {
 		let cf = db.cf_handle(USER_CF).unwrap();
 		let iter = db.full_iterator_cf(&cf, IteratorMode::Start);
