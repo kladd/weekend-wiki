@@ -101,8 +101,10 @@ async fn main() {
 		.fallback(not_found)
 		.with_state(context);
 
-	let server = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+	let addr = "0.0.0.0:8080";
+	let server = tokio::net::TcpListener::bind(addr).await.unwrap();
 
+	println!("Listening on {addr}");
 	axum::serve(server, app).await.unwrap();
 }
 
