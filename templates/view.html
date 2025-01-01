@@ -1,31 +1,31 @@
-<!DOCTYPE html>
-<html lang="en-US"><!-- 🦅 -->
-<head>
-    <title>{{ title }}</title>
-    <style>
-        {% include "css/main.css" %}
-    </style>
-</head>
-<body>
-<div id="wk-container">
-    <header>
-        <a href="/">Home</a>
-        {% include "search_bar.html" %}
-        {% include "login_logout_header.html" %}
-    </header>
-    <div id="main-container">
-        <main>
-            <h1 id="title">{{ title }}</h1>
-            <div id="actions">
-                <p class="text-quiet">
-                    <a href="{{ slug }}/edit">Edit</a> | <a href="{{ slug }}/history">History</a>
-                </p>
+<!doctype html>
+<html lang="en-US">
+    <!-- 🦅 -->
+    <head>
+        <title>{{ title }}</title>
+        <style>
+            {% include "css/main.css" %}
+        </style>
+    </head>
+    <body>
+        <div id="wk-container">
+            <header>
+                <a href="/">Home</a>
+                {% include "search_bar.html" %} {% include
+                "login_logout_header.html" %}
+            </header>
+            <div id="main-container">
+                <main>
+                    <h1 id="title">{{ title }}</h1>
+                    <div id="actions">
+                        <p class="text-quiet">
+                            <a href="{{ slug }}/edit">Edit</a> |
+                            <a href="{{ slug }}/history">History</a>
+                        </p>
+                    </div>
+                    <div id="content" class="read-content">{{ body }}</div>
+                </main>
             </div>
-            <div id="content" class="read-content">
-                {{ body|markdown }}
-            </div>
-        </main>
-    </div>
-</div>
-</body>
+        </div>
+    </body>
 </html>
