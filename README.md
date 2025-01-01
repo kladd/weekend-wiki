@@ -1,6 +1,6 @@
 # weekend-wiki
 
-Weekend project, don't use for real things: Token signing key is hard coded and there's no csrf mitigation.
+Weekend project, don't use for real things.
 
 Wiki documentation is in the wiki's [meta/ namespace](https://github.com/kladd/weekend-wiki/tree/main/base/meta).
 
@@ -18,7 +18,6 @@ Wiki documentation is in the wiki's [meta/ namespace](https://github.com/kladd/w
 
 ## TODO
 1. token signing key not hardcoded
-2. csrf mitigation
 
 ## Stack
 - axum: web framework

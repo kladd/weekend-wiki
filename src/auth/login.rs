@@ -38,11 +38,10 @@ pub async fn post(
 		});
 
 	if let Some(user) = user {
-		// TODO: CSRF mitigation.
 		let token = Token::new(user.name());
 
 		let cookie = format!(
-			"{}={}; SameSite=Lax; Path=/; HttpOnly",
+			"{}={}; SameSite=Strict; Path=/; HttpOnly",
 			COOKIE_NAME,
 			token.signed()
 		);
