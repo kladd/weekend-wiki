@@ -21,8 +21,8 @@ base58 = "0.2.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
-typst = { path = "../typst/crates/typst" }
-typst-html = { path = "../typst/crates/typst-html" }
+typst = { git = "https://github.com/typst/typst" }
+typst-html = { git = "https://github.com/typst/typst" }
 
 [dependencies.axum]
 version = "0.7"

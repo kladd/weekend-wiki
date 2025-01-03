@@ -9,11 +9,11 @@ use axum_extra::{headers, TypedHeader};
 use typst::{
 	diag::{FileError, FileResult, Warned},
 	foundations::{Bytes, Datetime},
-	html::{HtmlDocument, HtmlElement, HtmlNode},
+	html::HtmlDocument,
 	syntax::{FileId, Source, VirtualPath},
 	text::{Font, FontBook},
 	utils::LazyHash,
-	Feature, Features, Library, World,
+	Feature, Library, World,
 };
 
 use crate::{
