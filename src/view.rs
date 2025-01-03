@@ -27,11 +27,16 @@ use crate::{
 	Context,
 };
 
+pub enum PageBody {
+	Typst(String),
+	Raw(String),
+}
+
 #[derive(Template)]
 #[template(path = "view.html", escape = "none")]
 pub struct ViewTemplate<'a> {
 	pub(crate) title: &'a str,
-	pub(crate) body: &'a str,
+	pub(crate) body: PageBody,
 	pub(crate) slug: &'a str,
 	pub user: Option<UserView>,
 }
@@ -122,13 +127,16 @@ pub async fn get(
 		let Warned { output, warnings } =
 			typst::compile::<HtmlDocument>(&world);
 		// TODO: unwrap
-		let result = output.and_then(|doc| typst_html::html(&doc)).unwrap();
+		let result = output
+			.and_then(|doc| typst_html::html(&doc))
+			.map(|ty| PageBody::Typst(ty))
+			.unwrap_or_else(|_| PageBody::Raw(page.content().to_string()));
 		dbg!(warnings);
 
 		Html(
 			ViewTemplate {
 				title: page.title(),
-				body: &result,
+				body: result,
 				slug: page.slug(),
 				user: user.map(UserView::new),
 			}

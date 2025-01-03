@@ -23,7 +23,14 @@
                             <a href="{{ slug }}/history">History</a>
                         </p>
                     </div>
-                    <div id="content" class="read-content">{{ body }}</div>
+                    <div id="content" class="read-content">
+                        {% match body %}
+                        {% when PageBody::Typst with (content) %}
+                            {{ content }}
+                        {% when PageBody::Raw with (content) %}
+                            {{ content|e("html") }}
+                        {% endmatch %}
+                    </div
                 </main>
             </div>
         </div>
