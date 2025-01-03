@@ -9,6 +9,7 @@ use axum::{
 use password_hash::{PasswordHash, PasswordVerifier};
 use pbkdf2::Pbkdf2;
 use serde::Deserialize;
+use tracing::trace;
 
 use crate::{
 	auth::{token::Token, user::User, COOKIE_NAME},
@@ -26,15 +27,20 @@ pub async fn post(
 	State(state): State<Arc<Context>>,
 	Form(params): Form<LoginPayload>,
 ) -> impl IntoResponse {
+	trace!("Begin find user");
 	let user = User::get(&state.db, &params.username)
 		.await
 		.filter(|found| {
-			Pbkdf2
+			trace!("End find user");
+			trace!("Begin verify password");
+			let ok = Pbkdf2
 				.verify_password(
 					params.password.as_bytes(),
 					&PasswordHash::new(&found.password_hash).unwrap(),
 				)
-				.is_ok()
+				.is_ok();
+			trace!("End verify password");
+			ok
 		});
 
 	if let Some(user) = user {

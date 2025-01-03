@@ -9,6 +9,7 @@ use axum::{
 };
 use rocksdb::{IteratorMode, TransactionDB, TransactionDBOptions};
 use tower_http::services::ServeDir;
+use tracing::info;
 
 use crate::{
 	auth::{
@@ -54,7 +55,8 @@ pub struct Context {
 
 #[tokio::main]
 async fn main() {
-	println!("Starting with DB: {LOCAL_DB_PATH}");
+	tracing_subscriber::fmt::init();
+	info!("Starting with database: {LOCAL_DB_PATH}");
 	// Database.
 	let mut db_opts = rocksdb::Options::default();
 	db_opts.create_if_missing(true);
@@ -70,9 +72,11 @@ async fn main() {
 	// Populate meta namespace.
 	// TODO: This really doesn't need to happen every time the application
 	//       starts.
+	info!("Seeding database");
 	seed_base(&db).await;
 
 	// Search
+	info!("Building search index");
 	let search_context = RwLock::new(search::SearchContext::new(&db).await);
 
 	// Whole world.
@@ -104,7 +108,7 @@ async fn main() {
 	let addr = "0.0.0.0:8080";
 	let server = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-	println!("Listening on {addr}");
+	info!("Listening on {addr}");
 	axum::serve(server, app).await.unwrap();
 }
 
@@ -120,7 +124,7 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		.full_iterator_cf(&db.cf_handle(PAGE_CF).unwrap(), IteratorMode::Start);
 	for page in pages {
 		let (k, v) = page.unwrap();
-		println!("PAGE {:?} => {}", PageKey::dec(k), Page::dec(v).title());
+		info!("PAGE {:?} => {}", PageKey::dec(k), Page::dec(v).title());
 	}
 
 	let history = db
@@ -129,9 +133,9 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		let (k, v) = hist.unwrap();
 		let key = HistoryKey::from_bytes(k);
 		if key.revision().contains("VERSION") {
-			println!("HIST {key:?} => {:?}", HistoryVersionRecord::dec(v));
+			info!("HIST {key:?} => {:?}", HistoryVersionRecord::dec(v));
 		} else {
-			println!("HIST {key:?} => [DIFF]");
+			info!("HIST {key:?} => [DIFF]");
 		}
 	}
 
@@ -139,14 +143,14 @@ async fn dump(State(ctx): State<Arc<Context>>) -> impl IntoResponse {
 		.full_iterator_cf(&db.cf_handle(NSPC_CF).unwrap(), IteratorMode::Start);
 	for ns in nss {
 		let (k, v) = ns.unwrap();
-		println!("NSPC {:?} => {:?}", NamespaceKey::dec(k), Namespace::dec(v));
+		info!("NSPC {:?} => {:?}", NamespaceKey::dec(k), Namespace::dec(v));
 	}
 
 	let users = db
 		.full_iterator_cf(&db.cf_handle(USER_CF).unwrap(), IteratorMode::Start);
 	for user in users {
 		let (k, v) = user.unwrap();
-		println!("USER {:?} => {:?}", UserKey::dec(k), User::dec(v));
+		info!("USER {:?} => {:?}", UserKey::dec(k), User::dec(v));
 	}
 
 	(StatusCode::OK, "OK")

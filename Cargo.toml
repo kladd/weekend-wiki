@@ -18,6 +18,8 @@ unified-diff = "0.2.1"
 sha2 = "0.10.6"
 hmac = "0.12.1"
 base58 = "0.2.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [dependencies.axum]
 version = "0.7"

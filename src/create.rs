@@ -67,7 +67,6 @@ pub async fn post(
 	// TODO: Check for duplicates first.
 	Page::put(&state.db, &ns.name, &page).await;
 
-	// TODO: Update search index.
 	state.search.write().unwrap().update_index(&ns.name, &page);
 
 	Redirect::to(&format!("/{}/{}", ns.name, page.slug())).into_response()
