@@ -3368,7 +3368,6 @@ checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 [[package]]
 name = "typst"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "comemo",
  "ecow",
@@ -3391,7 +3390,6 @@ source = "git+https://github.com/typst/typst-assets?rev=8cccef9#8cccef93b5da73a1
 [[package]]
 name = "typst-eval"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "comemo",
  "ecow",
@@ -3410,7 +3408,6 @@ dependencies = [
 [[package]]
 name = "typst-html"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "comemo",
  "ecow",
@@ -3425,7 +3422,6 @@ dependencies = [
 [[package]]
 name = "typst-layout"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "az",
  "bumpalo",
@@ -3456,7 +3452,6 @@ dependencies = [
 [[package]]
 name = "typst-library"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "az",
  "bitflags 2.6.0",
@@ -3515,7 +3510,6 @@ dependencies = [
 [[package]]
 name = "typst-macros"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -3526,7 +3520,6 @@ dependencies = [
 [[package]]
 name = "typst-realize"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "arrayvec",
  "bumpalo",
@@ -3543,7 +3536,6 @@ dependencies = [
 [[package]]
 name = "typst-svg"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "base64 0.22.1",
  "comemo",
@@ -3561,7 +3553,6 @@ dependencies = [
 [[package]]
 name = "typst-syntax"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "ecow",
  "serde",
@@ -3578,7 +3569,6 @@ dependencies = [
 [[package]]
 name = "typst-timing"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "parking_lot",
  "serde",
@@ -3588,7 +3578,6 @@ dependencies = [
 [[package]]
 name = "typst-utils"
 version = "0.12.0"
-source = "git+https://github.com/typst/typst#bb38a01d0625d5bdab0af50daf479e60c774d90e"
 dependencies = [
  "once_cell",
  "portable-atomic",

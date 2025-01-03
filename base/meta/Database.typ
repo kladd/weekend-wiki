@@ -1,6 +1,6 @@
-## Database keys
+== Database keys
 
-### History
+=== History
 
 The `namespace/slug/VERSION` record contains the version that should be
 assigned to the next revision once an edit is made. It could also be thought
@@ -12,19 +12,19 @@ namespace/slug/0       => Diff 0 -> 1
 namespace/slug/VERSION => 2
 ```
 
-### Pages
+=== Pages
 
 ```
 namespace/slug         => Doc
 ```
 
-### Users
+=== Users
 
 ```
 username               => User
 ```
 
-### Namespaces
+=== Namespaces
 
 ```
 namespace              => Namespace

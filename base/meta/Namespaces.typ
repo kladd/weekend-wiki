@@ -1,12 +1,12 @@
-[Users](/meta/users) can belong to many namespaces, and within each namespace
-they can have a different [role](/meta/roles).
+#link("/meta/users", "Users") can belong to many namespaces, and within each
+namespace they can have a different #link("/meta/roles", "Roles").
 
-## Meta namespace
+== Meta namespace
 
 Every user has access to the meta namespace. It contains the documentation for
 the wiki, and is probably read only.
 
-## Page URLs
+== Page URLs
 
 ```
 /namespace/page-name         : Read "Page Name" in "Namespace"
